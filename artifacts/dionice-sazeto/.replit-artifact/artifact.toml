@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Dionice sažeto"
+description = "Moderan informativni web za kratke, jasne i pravovremene vijesti o investiranju, dionicama i globalnim financijskim tržištima."
+version = "1.0.0"
+id = "artifacts/dionice-sazeto"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23767
+
+[services.development]
+run = "pnpm --filter @workspace/dionice-sazeto run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dionice-sazeto", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/dionice-sazeto/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23767"
+BASE_PATH = "/"
