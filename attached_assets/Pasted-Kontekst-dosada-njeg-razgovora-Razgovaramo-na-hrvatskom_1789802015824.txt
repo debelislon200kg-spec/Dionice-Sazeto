@@ -1,0 +1,92 @@
+Kontekst dosadašnjeg razgovora:
+
+Razgovaramo na hrvatskom jeziku.
+
+Želim izraditi malu web-aplikaciju za praćenje vijesti o dionicama. Aplikacija bi trebala koristiti najviše četiri ili pet izvora vijesti koje ću naknadno poslati kao linkove.
+
+Početna verzija treba imati ručno osvježavanje vijesti pomoću gumba, primjerice:
+
+[ Osvježi vijesti ]
+
+Kada kliknem gumb, aplikacija treba dohvatiti najnovije vijesti iz odabranih izvora i prikazati ih na jednom mjestu.
+
+Za svaku vijest želim vidjeti:
+
+- naziv sajta ili izvora odmah uz naslov
+- originalni naslov na engleskom jeziku
+- prijevod naslova na hrvatski
+- kratak sažetak vijesti na hrvatskom jeziku
+- poveznicu na originalni članak
+- naziv kompanije i/ili ticker dionice, ako ih je moguće prepoznati
+- kratku analizu mogućeg utjecaja vijesti na dionicu
+
+Analiza bi trebala kratko označiti:
+
+- je li vijest pozitivna, negativna ili mješovita
+- postoji li mogući pritisak prema rastu ili padu
+- zašto je vijest važna
+- koji su glavni rizici ili neizvjesnosti
+- po mogućnosti razinu pouzdanosti procjene
+
+Analiza ne smije tvrditi da će dionica sigurno rasti ili padati. Treba koristiti oprezne formulacije poput:
+
+- mogući pozitivan katalizator
+- mogući negativan pritisak
+- kratkoročno pozitivan signal
+- mješovit utjecaj
+- nije dovoljno podataka za zaključak
+
+Treba jasno naznačiti da analiza nije financijski savjet i da kretanje cijene nije zajamčeno.
+
+Primjer željenog prikaza:
+
+Microsoft objavio snažniju prognozu prihoda iz cloud poslovanja
+Izvor: Reuters
+
+Originalni naslov:
+Microsoft raises cloud growth outlook as AI demand accelerates
+
+Prijevod naslova:
+Microsoft povećao prognozu rasta clouda zbog ubrzane potražnje za umjetnom inteligencijom
+
+Sažetak:
+Microsoft očekuje snažniji rast prihoda iz cloud poslovanja nego što se ranije predviđalo, zahvaljujući većoj potražnji za AI uslugama.
+
+Dionica:
+MSFT
+
+Utjecaj:
+Pozitivan
+
+Mogući smjer:
+Mogući kratkoročni pritisak prema rastu
+
+Razlog:
+Povećana prognoza prihoda i snažna potražnja mogu pozitivno utjecati na očekivanja ulagača.
+
+Rizik:
+Pozitivna očekivanja možda su već uračunata u cijenu dionice.
+
+[Pročitaj originalni članak]
+
+Važno:
+
+- Izvori će biti uglavnom na engleskom jeziku.
+- Rezultati trebaju biti prevedeni i prikazani na hrvatskom.
+- Želim zadržati originalni engleski naslov kako bih kasnije mogao pronaći istu vijest na izvornom sajtu.
+- Link na original mora biti vidljiv.
+- Uz vijest treba jasno pisati s kojeg sajta dolazi.
+- Prva verzija može imati samo ručno osvježavanje, bez automatskog dnevnog slanja.
+- U Free Modeu je moguće napraviti ovakvu aplikaciju s gumbom za ručno osvježavanje.
+- Automatske Routines koje bi se same pokretale svaki dan ili svakih sat vremena nisu dostupne u Free Modeu.
+- Nije potrebno odmah dodavati puno izvora ili napredne funkcionalnosti.
+
+Trenutno još nisam poslao linkove izvora. Sljedeći korak je da ih pošaljem, nakon čega treba potvrditi izvore, pripremiti plan i krenuti u izradu aplikacije.
+
+Projektna situacija:
+
+- U početku je otvoren projekt pod nazivom „Razno”.
+- Namjera je bila izraditi poseban projekt pod nazivom „Aplikacija vijesti dionice”.
+- Poseban projekt još nije otvoren, a aplikacija nije započeta.
+- Ako je moguće, prvo nastaviti u posebnom projektu s nazivom „Aplikacija vijesti dionice”.
+- Ako nije moguće, može se nastaviti u postojećem projektu, ali bez gubitka gore navedenih zahtjeva.
