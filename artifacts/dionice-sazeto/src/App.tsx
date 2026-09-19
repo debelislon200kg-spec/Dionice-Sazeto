@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useRefreshNews } from '@workspace/api-client-react';
+import type { NewsItem } from '@workspace/api-client-react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -176,6 +179,70 @@ const stories: Story[] = [
 ];
 
 const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Makro', 'Regija'];
+const queryClient = new QueryClient();
+
+function sourceShortName(source: string): string {
+  const shortcuts: Record<string, string> = {
+    'Yahoo Finance': 'YAHOO',
+    Investopedia: 'INVESTOPEDIA',
+    Bloomberg: 'BLOOMBERG',
+    Benzinga: 'BENZINGA',
+    'Stock Analysis': 'STOCK ANALYSIS',
+    'Investing.com': 'INVESTING',
+  };
+  return shortcuts[source] ?? source.toUpperCase();
+}
+
+function categoryForItem(item: NewsItem): Exclude<Category, 'Sve'> {
+  const searchable = `${item.originalTitle} ${item.translatedTitle} ${item.company}`.toLowerCase();
+  if (/(fed|ecb|kamate|inflacij|interest rate|central bank|monetary)/.test(searchable)) {
+    return 'Makro';
+  }
+  if (/(europe|europa|eurozone|germany|njema|brussels|bruxelles)/.test(searchable)) {
+    return 'Regija';
+  }
+  if (item.ticker || item.company) {
+    return 'Kompanije';
+  }
+  return 'Tržišta';
+}
+
+function publishedLabel(publishedAt: string | null): string {
+  if (!publishedAt) return 'Novo';
+  const date = new Date(publishedAt);
+  if (Number.isNaN(date.getTime())) return publishedAt;
+  return date.toLocaleString('hr-HR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function mapNewsItem(item: NewsItem, index: number): Story {
+  const accents = ['lime', 'coral', 'blue', 'amber', 'violet', 'navy'] as const;
+  return {
+    id: item.id,
+    category: categoryForItem(item),
+    source: item.source,
+    sourceShort: sourceShortName(item.source),
+    published: publishedLabel(item.publishedAt),
+    readTime: item.readTime,
+    company: item.company || 'Tržište',
+    ticker: item.ticker ?? undefined,
+    original: item.originalTitle,
+    title: item.translatedTitle,
+    summary: item.summary,
+    direction: item.direction,
+    pressure: item.pressure,
+    why: item.why,
+    risks: item.risks,
+    confidence: item.confidence,
+    accent: accents[index % accents.length],
+    featured: index === 0,
+    link: item.articleUrl,
+  };
+}
 
 function DirectionMark({ direction }: { direction: Direction }) {
   if (direction === 'positive') return <TrendingUp size={14} strokeWidth={2.5} />;
@@ -217,40 +284,51 @@ function BookmarkButton({
   );
 }
 
-function App() {
+function NewsHome() {
   const [activeCategory, setActiveCategory] = useState<Category>('Sve');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [currentStories, setCurrentStories] = useState<Story[]>(stories);
   const [savedStories, setSavedStories] = useState<string[]>([]);
   const [expandedStory, setExpandedStory] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [refreshLabel, setRefreshLabel] = useState('Osvježi pregled');
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [sourceWarnings, setSourceWarnings] = useState<string[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [newsletterSent, setNewsletterSent] = useState(false);
+  const refreshMutation = useRefreshNews();
 
   const filteredStories = useMemo(() => {
     const normalized = searchQuery.toLowerCase().trim();
-    return stories.filter((story) => {
+    return currentStories.filter((story) => {
       const matchesCategory = activeCategory === 'Sve' || story.category === activeCategory;
       const searchable = `${story.title} ${story.original} ${story.company} ${story.source}`.toLowerCase();
       return matchesCategory && (!normalized || searchable.includes(normalized));
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, currentStories, searchQuery]);
 
   const toggleSaved = (id: string) => {
     setSavedStories((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   };
 
   const refreshBriefing = () => {
-    if (refreshing) return;
-    setRefreshing(true);
+    if (refreshMutation.isPending) return;
+    setRefreshError(null);
     setRefreshLabel('Provjeravam izvore…');
-    window.setTimeout(() => {
-      setRefreshing(false);
-      setRefreshLabel('Demo pregled osvježen');
-      window.setTimeout(() => setRefreshLabel('Osvježi pregled'), 2200);
-    }, 850);
+    refreshMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setCurrentStories(data.items.map(mapNewsItem));
+        setSourceWarnings(data.warnings);
+        setRefreshLabel(`Osvježeno u ${new Date(data.refreshedAt).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`);
+        window.setTimeout(() => setRefreshLabel('Osvježi pregled'), 2600);
+      },
+      onError: (error) => {
+        const message = error instanceof Error ? error.message : 'Osvježavanje nije uspjelo.';
+        setRefreshError(message);
+        setRefreshLabel('Pokušaj ponovno');
+      },
+    });
   };
 
   const submitNewsletter = (event: FormEvent<HTMLFormElement>) => {
@@ -260,10 +338,10 @@ function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden">
+      <div className="min-h-[100dvh] overflow-x-hidden">
       <div className="topline">
         <div className="shell flex items-center justify-between gap-4">
-          <p><span className="live-dot" /> Jutarnji pregled · Srijeda, 12. lipnja 2024.</p>
+          <p><span className="live-dot" /> Jutarnji pregled · Ručno osvježavanje izvora</p>
           <p className="hidden sm:block">Sadržaj je informativan, ne financijski savjet</p>
         </div>
       </div>
@@ -299,8 +377,8 @@ function App() {
             {!searchOpen && (
               <button type="button" className="icon-button" onClick={() => setSearchOpen(true)} aria-label="Otvori pretragu" data-testid="button-open-search"><Search size={19} /></button>
             )}
-            <button type="button" className="refresh-button header-refresh" onClick={refreshBriefing} disabled={refreshing} data-testid="button-refresh-header">
-              <RefreshCw size={15} className={refreshing ? 'spin' : ''} />
+             <button type="button" className="refresh-button header-refresh" onClick={refreshBriefing} disabled={refreshMutation.isPending} data-testid="button-refresh-header">
+               <RefreshCw size={15} className={refreshMutation.isPending ? 'spin' : ''} />
               <span className="hidden sm:inline">{refreshLabel}</span>
             </button>
             <button type="button" className="icon-button mobile-menu-trigger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Otvori izbornik" data-testid="button-mobile-menu">
@@ -342,7 +420,7 @@ function App() {
             <div className="hero-note">
               <p>Bez buke. Bez predviđanja koja glume sigurnost. Samo kontekst koji možete pročitati uz prvu kavu.</p>
               <button type="button" onClick={refreshBriefing} className="text-link" data-testid="button-refresh-hero">
-                {refreshing ? 'Učitavam demo…' : 'Osvježi jutarnji pregled'} <ArrowRight size={15} />
+                 {refreshMutation.isPending ? 'Dohvaćam izvore…' : 'Osvježi jutarnji pregled'} <ArrowRight size={15} />
               </button>
             </div>
           </div>
@@ -357,31 +435,31 @@ function App() {
                 <span className="art-number">01</span>
               </div>
               <div className="lead-story-body">
-                <StoryMeta story={stories[0]} />
+                 <StoryMeta story={currentStories[0]} />
                 <div className="story-heading-row">
                   <div>
-                    <span className="category-label">{stories[0].category} · {stories[0].company}</span>
-                    <h2>{stories[0].title}</h2>
+                     <span className="category-label">{currentStories[0].category} · {currentStories[0].company}</span>
+                     <h2>{currentStories[0].title}</h2>
                   </div>
-                  <BookmarkButton saved={savedStories.includes(stories[0].id)} onClick={() => toggleSaved(stories[0].id)} id={stories[0].id} />
+                   <BookmarkButton saved={savedStories.includes(currentStories[0].id)} onClick={() => toggleSaved(currentStories[0].id)} id={currentStories[0].id} />
                 </div>
-                <p className="original-headline">“{stories[0].original}”</p>
-                <p className="story-summary">{stories[0].summary}</p>
+                 <p className="original-headline">“{currentStories[0].original}”</p>
+                 <p className="story-summary">{currentStories[0].summary}</p>
                 <div className="impact-row">
-                  <span className={`direction-pill ${stories[0].direction}`}><DirectionMark direction={stories[0].direction} /> {stories[0].direction === 'mixed' ? 'MJEŠOVITO' : 'POZITIVNO'}</span>
-                  <span className="impact-copy">{stories[0].pressure}</span>
+                   <span className={`direction-pill ${currentStories[0].direction}`}><DirectionMark direction={currentStories[0].direction} /> {currentStories[0].direction === 'mixed' ? 'MJEŠOVITO' : currentStories[0].direction === 'negative' ? 'NEGATIVNO' : 'POZITIVNO'}</span>
+                   <span className="impact-copy">{currentStories[0].pressure}</span>
                 </div>
-                <button type="button" className="story-link" onClick={() => setExpandedStory(expandedStory === stories[0].id ? null : stories[0].id)} data-testid="button-expand-fed-patience">
-                  {expandedStory === stories[0].id ? 'Sakrij analizu' : 'Pročitaj analizu'} <ArrowUpRight size={16} />
+                 <button type="button" className="story-link" onClick={() => setExpandedStory(expandedStory === currentStories[0].id ? null : currentStories[0].id)} data-testid="button-expand-fed-patience">
+                   {expandedStory === currentStories[0].id ? 'Sakrij analizu' : 'Pročitaj analizu'} <ArrowUpRight size={16} />
                 </button>
-                {expandedStory === stories[0].id && <Analysis story={stories[0]} />}
+                 {expandedStory === currentStories[0].id && <Analysis story={currentStories[0]} />}
               </div>
             </article>
 
             <aside className="side-brief animate-rise animate-rise-delay-2">
               <div className="section-kicker"><span>Danas u fokusu</span><span className="font-mono-ui">03 priče</span></div>
               <div className="side-brief-list">
-                {stories.slice(1, 4).map((story, index) => (
+                 {currentStories.slice(1, 4).map((story, index) => (
                   <article className="mini-story" key={story.id}>
                     <span className={`mini-index mini-${story.accent}`}>0{index + 2}</span>
                     <div className="min-w-0">
@@ -395,7 +473,7 @@ function App() {
               </div>
               <div className="side-note">
                 <CircleAlert size={17} />
-                <p>Ovo je demo pregled. Živi izvori bit će spojeni nakon što odaberete 4–5 stranica koje pratimo.</p>
+                 <p>{sourceWarnings.length > 0 ? sourceWarnings[0] : 'Kliknite osvježavanje za dohvat najnovijih vijesti iz odabranih izvora.'}</p>
               </div>
             </aside>
           </div>
@@ -419,11 +497,12 @@ function App() {
             </div>
             <div className="section-actions">
               <span className="saved-count"><Bookmark size={14} /> {savedStories.length} spremljeno</span>
-              <button type="button" className="refresh-button" onClick={refreshBriefing} disabled={refreshing} data-testid="button-refresh-latest">
-                <RefreshCw size={15} className={refreshing ? 'spin' : ''} /> <span>{refreshLabel}</span>
+               <button type="button" className="refresh-button" onClick={refreshBriefing} disabled={refreshMutation.isPending} data-testid="button-refresh-latest">
+                 <RefreshCw size={15} className={refreshMutation.isPending ? 'spin' : ''} /> <span>{refreshLabel}</span>
               </button>
             </div>
           </div>
+           {refreshError && <div className="refresh-error" role="alert"><CircleAlert size={15} /> {refreshError}</div>}
 
           <div className="filter-row">
             <div className="category-filters" role="tablist" aria-label="Filtriraj po kategoriji">
@@ -441,7 +520,7 @@ function App() {
                 </button>
               ))}
             </div>
-            <div className="filter-label"><Filter size={14} /> {filteredStories.length} od {stories.length} priča</div>
+             <div className="filter-label"><Filter size={14} /> {filteredStories.length} od {currentStories.length} priča</div>
           </div>
 
           {filteredStories.length > 0 ? (
@@ -484,14 +563,14 @@ function App() {
         </section>
 
         <section className="disclaimer-section shell">
-          <div className="disclaimer-card">
+           <div className="disclaimer-card">
             <div className="disclaimer-icon"><ShieldAlert size={22} /></div>
             <div>
               <p className="eyebrow">Kako čitati ovaj pregled</p>
               <h2>Smjer nije prognoza.</h2>
               <p>Oznake pozitivno, negativno i mješovito opisuju mogući pritisak na sentiment, ne garantiraju kretanje cijene. Svaka analiza je informativna i nije financijski savjet.</p>
             </div>
-            <div className="disclaimer-stat"><strong>4–5</strong><span>izvora<br />u planu</span></div>
+             <div className="disclaimer-stat"><strong>6</strong><span>izvora<br />u praćenju</span></div>
           </div>
         </section>
 
@@ -526,10 +605,18 @@ function App() {
         <div className="shell footer-inner">
           <a href="#vrh" className="brand footer-brand" data-testid="link-footer-home"><span className="brand-mark">DS</span><span className="brand-copy"><strong>Dionice</strong><em>sažeto</em></span></a>
           <p>Čitaj manje. Razumij više.</p>
-          <div className="footer-meta"><span>© 2024 Dionice sažeto</span><span>Demo izdanje · Živi izvori uskoro</span></div>
+          <div className="footer-meta"><span>© 2026 Dionice sažeto</span><span>Osvježavanje po kliku · AI sažetak</span></div>
         </div>
       </footer>
-    </div>
+      </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NewsHome />
+    </QueryClientProvider>
   );
 }
 

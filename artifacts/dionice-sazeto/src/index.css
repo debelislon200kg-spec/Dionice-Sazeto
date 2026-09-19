@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -114,7 +114,7 @@
   --chart-4: 38 80% 58%;
   --chart-5: 222 34% 18%;
   --app-font-sans: 'DM Sans', sans-serif;
-  --app-font-serif: 'Bodoni Moda', Georgia, serif;
+  --app-font-serif: 'DM Sans', sans-serif;
   --app-font-mono: 'Space Mono', monospace;
   --radius: 0.5rem;
   --shadow-2xs: 0 2px 0 hsl(222 34% 18% / 0.04);
@@ -601,6 +601,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .filter-chip:hover { color: hsl(var(--primary)); border-color: hsl(var(--border)); }
 .filter-chip.active { background: hsl(var(--primary)); color: hsl(var(--background)); }
 .filter-label { display: flex; align-items: center; gap: 7px; color: hsl(var(--muted-foreground)); font: 9px var(--app-font-mono); text-transform: uppercase; letter-spacing: .08em; }
+.refresh-error { display: flex; align-items: center; gap: 8px; margin: 14px 0 -10px; padding: 10px 12px; border: 1px solid hsl(var(--destructive) / .35); color: hsl(var(--destructive)); background: hsl(var(--destructive) / .06); font-size: 11px; }
 .stories-list { border-bottom: 1px solid hsl(var(--border)); }
 .story-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 26px; padding: 27px 0 29px; border-bottom: 1px solid hsl(var(--border)); border-left: 3px solid transparent; transition: border-color 180ms ease, padding-left 180ms ease, background-color 180ms ease; }
 .story-row:hover { border-left-color: hsl(var(--accent)); padding-left: 10px; background: hsl(var(--card) / .48); }

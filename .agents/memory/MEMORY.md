@@ -1,0 +1,1 @@
+- [News source availability](news-source-access.md) — public RSS access varies by publisher; preserve honest per-source warnings instead of inventing fallback articles.

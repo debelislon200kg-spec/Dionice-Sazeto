@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: news
+    description: Stock market news aggregation and analysis
 paths:
   /healthz:
     get:
@@ -24,6 +26,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /news/sources:
+    get:
+      operationId: listNewsSources
+      tags: [news]
+      summary: List configured news sources
+      responses:
+        "200":
+          description: Configured news sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsSource"
+  /news/refresh:
+    post:
+      operationId: refreshNews
+      tags: [news]
+      summary: Fetch and analyze the latest news from configured sources
+      responses:
+        "200":
+          description: Refreshed news briefing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsRefreshResponse"
+        "502":
+          description: Sources could not be reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsRefreshError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +67,111 @@ components:
           type: string
       required:
         - status
+    NewsSource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [configured, partial, unavailable]
+      required:
+        - id
+        - name
+        - url
+        - status
+    NewsItem:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        sourceUrl:
+          type: string
+          format: uri
+        articleUrl:
+          type: string
+          format: uri
+        originalTitle:
+          type: string
+        translatedTitle:
+          type: string
+        summary:
+          type: string
+        company:
+          type: string
+        ticker:
+          type: ["string", "null"]
+        direction:
+          type: string
+          enum: [positive, negative, mixed]
+        pressure:
+          type: string
+        why:
+          type: string
+        risks:
+          type: string
+        confidence:
+          type: string
+        publishedAt:
+          type: ["string", "null"]
+        readTime:
+          type: string
+      required:
+        - id
+        - source
+        - sourceUrl
+        - articleUrl
+        - originalTitle
+        - translatedTitle
+        - summary
+        - company
+        - ticker
+        - direction
+        - pressure
+        - why
+        - risks
+        - confidence
+        - publishedAt
+        - readTime
+    NewsRefreshResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsItem"
+        refreshedAt:
+          type: string
+          format: date-time
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsSource"
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+        - items
+        - refreshedAt
+        - sources
+        - warnings
+    NewsRefreshError:
+      type: object
+      properties:
+        error:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+        - error
 
