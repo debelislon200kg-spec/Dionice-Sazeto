@@ -50,11 +50,10 @@ export const NEWS_SOURCES: NewsSource[] = [
     status: "configured",
   },
   {
-    id: "investopedia",
-    name: "Investopedia",
-    url: "https://www.investopedia.com/news-4427706",
-    feedUrl:
-      "https://www.investopedia.com/feedbuilder/feed/getfeed?feedName=rss_articles",
+    id: "finviz",
+    name: "Finviz",
+    url: "https://finviz.com/news",
+    feedUrl: "https://finviz.com/news",
     status: "configured",
   },
   {
@@ -194,6 +193,54 @@ function parseFeed(xml: string, source: NewsSource): RawNewsItem[] {
   return results;
 }
 
+function parseFinvizHtml(html: string, source: NewsSource): RawNewsItem[] {
+  const rows = Array.from(
+    html.matchAll(/<tr\b[^>]*news_table-row[^>]*>[\s\S]*?<\/tr>/gi),
+  ).map((match) => match[0]);
+  const seenUrls = new Set<string>();
+
+  return rows.flatMap((row) => {
+    const link = row.match(
+      /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i,
+    );
+    if (!link?.[1] || !link[2]) {
+      return [];
+    }
+
+    const articleUrl = decodeHtmlEntities(link[1]).trim();
+    const originalTitle = cleanText(link[2]);
+    if (!articleUrl.startsWith("http") || !originalTitle || seenUrls.has(articleUrl)) {
+      return [];
+    }
+
+    seenUrls.add(articleUrl);
+    const dateMatch = row.match(
+      /<td\b[^>]*news_date-cell[^>]*>([\s\S]*?)<\/td>/i,
+    );
+    const descriptionMatch = row.match(
+      /data-boxover-text=["']([^"']+)["']/i,
+    );
+
+    return [
+      {
+        id: `${source.id}-${createHash("sha1")
+          .update(`${source.id}:${articleUrl}`)
+          .digest("hex")
+          .slice(0, 16)}`,
+        sourceId: source.id,
+        source: source.name,
+        sourceUrl: source.url,
+        articleUrl,
+        originalTitle,
+        description: descriptionMatch?.[1]
+          ? cleanText(descriptionMatch[1])
+          : "",
+        publishedAt: dateMatch?.[1] ? cleanText(dateMatch[1]) : null,
+      },
+    ];
+  }).slice(0, 3);
+}
+
 async function fetchSource(
   source: NewsSource,
 ): Promise<{ items: RawNewsItem[]; warning?: string }> {
@@ -210,7 +257,10 @@ async function fetchSource(
   }
 
   const body = await response.text();
-  const items = parseFeed(body, source);
+  const items =
+    source.id === "finviz"
+      ? parseFinvizHtml(body, source)
+      : parseFeed(body, source);
   if (items.length === 0) {
     return {
       items: [],

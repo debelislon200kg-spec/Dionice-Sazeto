@@ -184,7 +184,7 @@ const queryClient = new QueryClient();
 function sourceShortName(source: string): string {
   const shortcuts: Record<string, string> = {
     'Yahoo Finance': 'YAHOO',
-    Investopedia: 'INVESTOPEDIA',
+    Finviz: 'FINVIZ',
     Bloomberg: 'BLOOMBERG',
     Benzinga: 'BENZINGA',
     'Stock Analysis': 'STOCK ANALYSIS',
@@ -412,19 +412,6 @@ function NewsHome() {
         </section>
 
         <section className="hero shell" id="pregled">
-          <div className="hero-intro animate-rise">
-            <div>
-              <p className="eyebrow"><span className="eyebrow-line" /> Prije prvog sastanka</p>
-              <h1>Što danas<br /><i>pomjera</i> tržište?</h1>
-            </div>
-            <div className="hero-note">
-              <p>Bez buke. Bez predviđanja koja glume sigurnost. Samo kontekst koji možete pročitati uz prvu kavu.</p>
-              <button type="button" onClick={refreshBriefing} className="text-link" data-testid="button-refresh-hero">
-                 {refreshMutation.isPending ? 'Dohvaćam izvore…' : 'Osvježi jutarnji pregled'} <ArrowRight size={15} />
-              </button>
-            </div>
-          </div>
-
           <div className="hero-grid">
             <article className="lead-story animate-rise animate-rise-delay-1">
               <div className="story-art">
@@ -482,9 +469,11 @@ function NewsHome() {
         <section className="signal-band">
           <div className="shell signal-grid">
             <div className="signal-intro"><span className="eyebrow-line" /><span>Na radaru</span></div>
-            <div className="signal-item"><span>01</span><strong>Kamate</strong><p>Fed ostaje oprezan</p></div>
-            <div className="signal-item"><span>02</span><strong>AI ulaganja</strong><p>Potražnja još drži</p></div>
-            <div className="signal-item"><span>03</span><strong>Europa</strong><p>Zarade su test</p></div>
+            <div className="signal-item"><span>01</span><strong>Kamate</strong><p>Fed ne žuri sa snižavanjem, pa skuplji novac ostaje važan za valuacije.</p></div>
+            <div className="signal-item"><span>02</span><strong>AI ulaganja</strong><p>Veliki cloud igrači i dalje troše, ali očekivanja za zaradu su viša.</p></div>
+            <div className="signal-item"><span>03</span><strong>Europa</strong><p>Banke i industrija trebaju potvrditi rast dobiti nakon snažnog početka.</p></div>
+            <div className="signal-item"><span>04</span><strong>Energija</strong><p>Cijene nafte važu rizik ponude protiv znakova mekše potražnje.</p></div>
+            <div className="signal-item"><span>05</span><strong>Geopolitika</strong><p>Trgovina, obrana i regulacija mogu brzo promijeniti raspoloženje.</p></div>
             <div className="signal-quote">“Prvo razumij. Onda odluči.”</div>
           </div>
         </section>
