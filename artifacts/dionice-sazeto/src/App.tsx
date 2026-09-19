@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { CSSProperties, FormEvent } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRefreshNews } from '@workspace/api-client-react';
 import type { NewsItem } from '@workspace/api-client-react';
@@ -284,6 +284,119 @@ function BookmarkButton({
   );
 }
 
+type MarketStatus = 'open' | 'closed' | 'premarket';
+
+type MarketDefinition = {
+  name: string;
+  exchange: string;
+  openStart: number;
+  openEnd: number;
+  premarketStart: number;
+  premarketEnd: number;
+};
+
+const marketDefinitions: MarketDefinition[] = [
+  { name: 'Tokyo', exchange: 'TSE', openStart: 60, openEnd: 540, premarketStart: 0, premarketEnd: 60 },
+  { name: 'London', exchange: 'LSE', openStart: 540, openEnd: 1050, premarketStart: 480, premarketEnd: 540 },
+  { name: 'Frankfurt', exchange: 'XETRA', openStart: 540, openEnd: 1050, premarketStart: 480, premarketEnd: 540 },
+  { name: 'Zagreb', exchange: 'ZSE', openStart: 570, openEnd: 990, premarketStart: 510, premarketEnd: 570 },
+  { name: 'New York', exchange: 'NYSE', openStart: 930, openEnd: 1320, premarketStart: 600, premarketEnd: 930 },
+  { name: 'Nasdaq', exchange: 'NASDAQ', openStart: 930, openEnd: 1320, premarketStart: 600, premarketEnd: 930 },
+];
+
+function minutesInZagreb(date: Date): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Zagreb',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 0);
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? 0);
+  return hour * 60 + minute;
+}
+
+function isWeekendInZagreb(date: Date): boolean {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Zagreb',
+    weekday: 'short',
+  }).format(date);
+  return weekday === 'Sat' || weekday === 'Sun';
+}
+
+function marketStatus(market: MarketDefinition, now: Date): MarketStatus {
+  if (isWeekendInZagreb(now)) return 'closed';
+  const minutes = minutesInZagreb(now);
+  if (minutes >= market.openStart && minutes < market.openEnd) return 'open';
+  if (minutes >= market.premarketStart && minutes < market.premarketEnd) return 'premarket';
+  return 'closed';
+}
+
+function clockLabel(date: Date): string {
+  return new Intl.DateTimeFormat('hr-HR', {
+    timeZone: 'Europe/Zagreb',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
+}
+
+function MarketStatusBoard() {
+  const [now, setNow] = useState(() => new Date());
+  const currentMinutes = minutesInZagreb(now);
+  const nowPercent = Math.min(99.4, Math.max(0.6, (currentMinutes / 1440) * 100));
+  const trackStyle = { '--market-now': `${nowPercent}%` } as CSSProperties;
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="market-board" aria-label="Status glavnih tržišta">
+      <div className="market-board-topline">
+        <span>MARKET HOURS</span>
+        <strong>{clockLabel(now)} CET</strong>
+      </div>
+      <div className="market-time-scale">
+        <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
+        <b style={{ left: `${nowPercent}%` }}>SADA</b>
+      </div>
+      <div className="market-rows">
+        {marketDefinitions.map((market) => {
+          const status = marketStatus(market, now);
+          const openLeft = (market.openStart / 1440) * 100;
+          const openWidth = ((market.openEnd - market.openStart) / 1440) * 100;
+          const premarketLeft = (market.premarketStart / 1440) * 100;
+          const premarketWidth = ((market.premarketEnd - market.premarketStart) / 1440) * 100;
+
+          return (
+            <div className="market-row" key={market.exchange}>
+              <div className="market-row-label">
+                <strong>{market.name}</strong>
+                <span>{market.exchange}</span>
+              </div>
+              <div className="market-track" style={trackStyle}>
+                <span className="market-window market-premarket" style={{ left: `${premarketLeft}%`, width: `${premarketWidth}%` }} />
+                <span className="market-window market-open" style={{ left: `${openLeft}%`, width: `${openWidth}%` }} />
+                <span className="market-now-line" />
+              </div>
+              <span className={`market-status ${status}`} title={status === 'open' ? 'Otvoreno' : status === 'premarket' ? 'Premarket' : 'Zatvoreno'}>
+                {status === 'open' ? <Check size={14} strokeWidth={3} /> : status === 'premarket' ? <Clock3 size={13} strokeWidth={2.5} /> : <X size={14} strokeWidth={3} />}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="market-board-legend">
+        <span><i className="legend-swatch open" /> otvoreno</span>
+        <span><i className="legend-swatch premarket" /> premarket</span>
+        <span><i className="legend-swatch closed" /> zatvoreno</span>
+      </div>
+    </div>
+  );
+}
+
 function NewsHome() {
   const [activeCategory, setActiveCategory] = useState<Category>('Sve');
   const [searchQuery, setSearchQuery] = useState('');
@@ -415,11 +528,7 @@ function NewsHome() {
           <div className="hero-grid">
             <article className="lead-story animate-rise animate-rise-delay-1">
               <div className="story-art">
-                <div className="art-grid" />
-                <div className="art-orbit art-orbit-one" />
-                <div className="art-orbit art-orbit-two" />
-                <div className="art-label">MARKET<br />OPEN</div>
-                <span className="art-number">01</span>
+                <MarketStatusBoard />
               </div>
               <div className="lead-story-body">
                  <StoryMeta story={currentStories[0]} />

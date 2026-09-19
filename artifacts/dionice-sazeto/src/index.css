@@ -501,8 +501,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .72fr); gap: 28px; }
 .lead-story {
   display: grid;
-  grid-template-columns: minmax(190px, .55fr) minmax(0, 1fr);
-  min-height: 450px;
+  grid-template-columns: minmax(325px, .9fr) minmax(0, 1fr);
+  min-height: 560px;
   background: hsl(var(--primary));
   color: hsl(var(--background));
 }
@@ -511,8 +511,36 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   overflow: hidden;
   background: hsl(var(--secondary));
   color: hsl(var(--primary));
-  min-height: 240px;
+  min-height: 560px;
 }
+.market-board { position: relative; z-index: 1; height: 100%; min-height: 560px; padding: 22px 18px 18px; background: hsl(var(--secondary)); color: hsl(var(--primary)); }
+.market-board-topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 15px; border-bottom: 1px solid hsl(var(--primary) / .25); font: 700 10px var(--app-font-mono); letter-spacing: .11em; }
+.market-board-topline strong { font-size: 9px; font-weight: 400; letter-spacing: .04em; }
+.market-time-scale { position: relative; display: flex; justify-content: space-between; padding: 14px 0 7px; color: hsl(var(--primary) / .55); font: 9px var(--app-font-mono); }
+.market-time-scale b { position: absolute; top: 0; transform: translateX(-50%); color: hsl(var(--primary)); font-size: 8px; font-weight: 700; letter-spacing: .05em; }
+.market-rows { border-top: 1px solid hsl(var(--primary) / .18); }
+.market-row { display: grid; grid-template-columns: 77px minmax(0, 1fr) 22px; align-items: center; gap: 10px; min-height: 67px; border-bottom: 1px solid hsl(var(--primary) / .16); }
+.market-row-label { display: flex; flex-direction: column; gap: 3px; }
+.market-row-label strong { font: 700 11px var(--app-font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.market-row-label span { color: hsl(var(--primary) / .58); font: 9px var(--app-font-mono); }
+.market-track { position: relative; height: 25px; background: hsl(var(--primary) / .08); border-top: 1px solid hsl(var(--primary) / .15); border-bottom: 1px solid hsl(var(--primary) / .15); }
+.market-track::after { position: absolute; inset: 12px 0 auto; height: 1px; background: hsl(var(--primary) / .2); content: ''; }
+.market-window { position: absolute; top: 5px; z-index: 1; height: 14px; }
+.market-open { background: hsl(var(--primary) / .32); }
+.market-premarket { background: hsl(276 67% 61% / .55); }
+.market-now-line { position: absolute; top: -5px; bottom: -5px; left: var(--market-now); z-index: 3; width: 2px; background: hsl(var(--primary)); box-shadow: 0 0 0 2px hsl(var(--secondary) / .7); }
+.market-now-line::before, .market-now-line::after { position: absolute; left: 50%; width: 5px; height: 5px; border: 1px solid hsl(var(--primary)); background: hsl(var(--secondary)); content: ''; transform: translateX(-50%) rotate(45deg); }
+.market-now-line::before { top: -2px; }
+.market-now-line::after { bottom: -2px; }
+.market-status { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid currentColor; }
+.market-status.open { color: hsl(145 67% 35%); background: hsl(145 67% 35% / .12); }
+.market-status.closed { color: hsl(4 65% 48%); background: hsl(4 65% 48% / .1); }
+.market-status.premarket { color: hsl(276 67% 49%); background: hsl(276 67% 61% / .16); }
+.market-board-legend { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 14px; color: hsl(var(--primary) / .62); font: 9px var(--app-font-mono); text-transform: uppercase; letter-spacing: .04em; }
+.market-board-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend-swatch { display: inline-block; width: 9px; height: 9px; background: hsl(var(--primary) / .32); }
+.legend-swatch.premarket { background: hsl(276 67% 61% / .7); }
+.legend-swatch.closed { background: hsl(var(--primary) / .13); border: 1px solid hsl(var(--primary) / .32); }
 .art-grid {
   position: absolute;
   inset: 0;
@@ -698,11 +726,12 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .brand-copy { font-size: 17px; }
   .hero { padding-top: 28px; padding-bottom: 55px; }
   .lead-story { display: block; min-height: 0; }
-  .story-art { height: 145px; min-height: 0; }
-  .art-orbit-one { top: 35px; left: 31%; }
-  .art-orbit-two { top: 62px; left: 37%; }
-  .art-label { top: 19px; }
-  .art-number { right: 20px; bottom: 16px; left: auto; }
+  .story-art { min-height: 0; }
+  .market-board { min-height: 515px; padding: 18px 14px 15px; }
+  .market-row { min-height: 58px; grid-template-columns: 70px minmax(0, 1fr) 20px; gap: 8px; }
+  .market-row-label strong { font-size: 10px; }
+  .market-row-label span { font-size: 8px; }
+  .market-board-legend { gap: 8px; font-size: 8px; }
   .lead-story-body { padding: 26px 22px 26px; }
   .lead-story h2 { font-size: 31px; }
   .original-headline { margin-top: 18px; }

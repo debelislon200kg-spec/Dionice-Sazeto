@@ -185,7 +185,7 @@ function parseFeed(xml: string, source: NewsSource): RawNewsItem[] {
       ]),
     });
 
-    if (results.length === 3) {
+    if (results.length === 4) {
       break;
     }
   }
@@ -238,7 +238,7 @@ function parseFinvizHtml(html: string, source: NewsSource): RawNewsItem[] {
         publishedAt: dateMatch?.[1] ? cleanText(dateMatch[1]) : null,
       },
     ];
-  }).slice(0, 3);
+  }).slice(0, 4);
 }
 
 async function fetchSource(
@@ -429,7 +429,7 @@ export async function refreshNews(): Promise<{
     }),
   );
 
-  const rawItems = results.flatMap((result) => result.items).slice(0, 15);
+  const rawItems = results.flatMap((result) => result.items).slice(0, 24);
   const warnings = results.flatMap((result) =>
     result.warning ? [result.warning] : [],
   );
