@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
   marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
   marketHeaderTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  marketHeaderLabel: { fontFamily: 'SpaceMono_700Bold', fontSize: 9, letterSpacing: 1.25 },
+  marketHeaderLabel: { fontFamily: 'SpaceMono_700Bold', fontSize: 10.8, letterSpacing: 1.25 },
   marketHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   marketClock: { fontFamily: 'SpaceMono_400Regular', fontSize: 10 },
   marketExpanded: { marginTop: 11 },
