@@ -709,14 +709,6 @@ export default function HomeScreen() {
         }
         ListHeaderComponent={
           <View style={styles.content}>
-            <View style={styles.intro}>
-              <View style={styles.sectionEyebrow}>
-                <View style={[styles.eyebrowLine, { backgroundColor: colors.accent }]} />
-                <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>JUTARNJI PREGLED</Text>
-              </View>
-              <Text style={[styles.heroTitle, { color: colors.primary }]}>Tržište, <Text style={{ color: colors.accent }}>sažeto.</Text></Text>
-              <Text style={[styles.heroCopy, { color: colors.mutedForeground }]}>Najvažnije vijesti za ulagače, prevedene u ono što stvarno znači za dionice.</Text>
-            </View>
             <MarketStatus />
             <View style={styles.sectionHeading}>
               <Text style={[styles.sectionTitle, { color: colors.primary }]}>Pregled dana</Text>
@@ -806,13 +798,7 @@ const styles = StyleSheet.create({
   brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
   brandSubtitle: { fontFamily: 'DMSans_700Bold', fontSize: 16, lineHeight: 16, letterSpacing: -0.5 },
   headerButton: { width: 38, height: 38, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  content: { paddingHorizontal: 20, paddingTop: 26 },
-  intro: { marginBottom: 23 },
-  sectionEyebrow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  eyebrowLine: { width: 22, height: 2 },
-  eyebrow: { fontFamily: 'SpaceMono_700Bold', fontSize: 9, letterSpacing: 1.4 },
-  heroTitle: { fontFamily: 'DMSans_500Medium', fontSize: 45, lineHeight: 45, letterSpacing: -2.4 },
-  heroCopy: { fontFamily: 'DMSans_400Regular', fontSize: 14, lineHeight: 21, marginTop: 14, maxWidth: 325 },
+  content: { paddingHorizontal: 20, paddingTop: 16 },
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
   marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
   marketHeaderTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
