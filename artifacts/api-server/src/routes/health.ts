@@ -3,7 +3,7 @@ import {
   type Request as ExpressRequest,
   type Response as ExpressResponse,
 } from "express";
-import { HealthCheckResponse } from "@workspace/api-zod";
+import { HealthCheckResponse } from "../lib/api-schemas.js";
 
 const router = Router();
 

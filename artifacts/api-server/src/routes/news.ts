@@ -6,7 +6,7 @@ import {
 import {
   ListNewsSourcesResponse,
   RefreshNewsResponse,
-} from "@workspace/api-zod";
+} from "../lib/api-schemas.js";
 import { NEWS_SOURCES, refreshNews } from "../lib/news.js";
 
 const router = Router();
