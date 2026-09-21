@@ -822,7 +822,7 @@ const styles = StyleSheet.create({
   marketScaleCaption: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, letterSpacing: 0.7, marginBottom: 7 },
   marketTimelineGrid: { flexDirection: 'row', alignItems: 'flex-start' },
   marketFixedColumn: { width: 78 },
-  marketStatusColumn: { width: 76 },
+  marketStatusColumn: { width: 57 },
   marketColumnHeader: { height: 32, justifyContent: 'flex-start', paddingTop: 3 },
   marketColumnHeaderText: { fontFamily: 'SpaceMono_700Bold', fontSize: 8, letterSpacing: 0.5 },
   marketNameRow: { height: 35, justifyContent: 'center' },
