@@ -21,8 +21,13 @@ import { setBaseUrl } from '@workspace/api-client-react';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const apiDomain = process.env.EXPO_PUBLIC_DOMAIN;
-setBaseUrl(apiDomain ? `https://${apiDomain}` : null);
+const apiDomain = process.env.EXPO_PUBLIC_DOMAIN?.trim();
+const apiBaseUrl = apiDomain
+  ? /^https?:\/\//i.test(apiDomain)
+    ? apiDomain
+    : `https://${apiDomain}`
+  : null;
+setBaseUrl(apiBaseUrl);
 
 const queryClient = new QueryClient();
 
