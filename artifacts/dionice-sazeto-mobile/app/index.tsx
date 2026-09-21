@@ -554,7 +554,7 @@ function FeaturedStory({
 }) {
   const colors = useColors();
   return (
-    <Pressable onPress={onOpen} style={({ pressed }) => [styles.featuredCard, pressed && styles.cardPressed, { backgroundColor: colors.primary }]}>
+    <Pressable onPress={onOpen} style={({ pressed }) => [styles.featuredCard, pressed && styles.cardPressed, { backgroundColor: colors.marketBackground }]}>
       <View style={styles.featuredTopline}>
         <View style={styles.featuredTag}>
           <View style={[styles.liveDot, { backgroundColor: colors.secondary }]} />
@@ -572,13 +572,13 @@ function FeaturedStory({
           <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={colors.secondary} />
         </Pressable>
       </View>
-      <Text style={[styles.featuredSource, { color: colors.secondary }]}>{story.source.toUpperCase()} · {story.published}</Text>
-      <Text style={[styles.featuredTitle, { color: colors.primaryForeground }]}>{story.title}</Text>
-      <Text style={[styles.featuredSummary, { color: colors.primaryForeground }]}>{story.summary}</Text>
+      <Text style={[styles.featuredSource, { color: colors.marketForeground }]}>{story.source.toUpperCase()} · {story.published}</Text>
+      <Text style={[styles.featuredTitle, { color: colors.marketForeground }]}>{story.title}</Text>
+      <Text style={[styles.featuredSummary, { color: colors.marketForeground }]}>{story.summary}</Text>
       <View style={styles.featuredFooter}>
         <View style={styles.featuredPressure}>
           <DirectionIcon direction={story.direction} color={colors.secondary} />
-          <Text style={[styles.featuredPressureText, { color: colors.primaryForeground }]}>{story.pressure}</Text>
+          <Text style={[styles.featuredPressureText, { color: colors.marketForeground }]}>{story.pressure}</Text>
         </View>
         <Feather name="arrow-up-right" size={17} color={colors.secondary} />
       </View>
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
   warning: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, marginBottom: 10 },
   warningText: { flex: 1, fontFamily: 'DMSans_400Regular', fontSize: 11, lineHeight: 15 },
   categoryRow: { gap: 8, paddingBottom: 17 },
-  categoryButton: { borderWidth: 1, paddingHorizontal: 13, paddingVertical: 8 },
+  categoryButton: { borderWidth: 1, paddingHorizontal: 9, paddingVertical: 8 },
   categoryText: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
   featuredCard: { padding: 18, marginBottom: 25 },
   featuredTopline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 },
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   bookmarkButton: { padding: 4 },
   featuredSource: { fontFamily: 'SpaceMono_400Regular', fontSize: 9, letterSpacing: 0.4, marginBottom: 11 },
   featuredTitle: { fontFamily: 'DMSans_700Bold', fontSize: 24, lineHeight: 27, letterSpacing: -0.8 },
-  featuredSummary: { fontFamily: 'DMSans_400Regular', fontSize: 13, lineHeight: 19, opacity: 0.78, marginTop: 12 },
+  featuredSummary: { fontFamily: 'DMSans_400Regular', fontSize: 13, lineHeight: 19, marginTop: 12 },
   featuredFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 21, paddingTop: 13, borderTopWidth: 1, borderTopColor: 'rgba(247,244,236,0.2)' },
   featuredPressure: { flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1 },
   featuredPressureText: { fontFamily: 'DMSans_500Medium', fontSize: 11, flex: 1 },
