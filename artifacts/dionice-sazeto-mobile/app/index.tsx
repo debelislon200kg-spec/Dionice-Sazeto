@@ -4,7 +4,6 @@ import {
   FlatList,
   Linking,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -642,16 +641,13 @@ function StoryCard({
   );
 }
 
-function EmptyState({ onRefresh }: { onRefresh: () => void }) {
+function EmptyState() {
   const colors = useColors();
   return (
     <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Feather name="inbox" size={28} color={colors.mutedForeground} />
       <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nema dostupnih vijesti</Text>
       <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Pokušaj ponovno dohvatiti najnovije izvore.</Text>
-      <Pressable onPress={onRefresh} style={({ pressed }) => [styles.retryButton, pressed && styles.pressed, { backgroundColor: colors.secondary }]}>
-        <Text style={[styles.retryText, { color: colors.primary }]}>Pokušaj ponovno</Text>
-      </Pressable>
     </View>
   );
 }
@@ -707,14 +703,6 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={stories.length > 0}
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshMutation.isPending}
-            onRefresh={refresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
         ListHeaderComponent={
           <View style={styles.content}>
             <MarketStatus />
@@ -726,9 +714,6 @@ export default function HomeScreen() {
               <View style={[styles.feedback, { backgroundColor: colors.errorSurface, borderColor: colors.accent }]}>
                 <Feather name="alert-circle" size={16} color={colors.destructive} />
                 <Text style={[styles.feedbackText, { color: colors.destructive }]}>{refreshError}</Text>
-                <Pressable onPress={refresh} accessibilityLabel="Pokušaj ponovno" style={styles.feedbackRetry}>
-                  <Feather name="refresh-cw" size={16} color={colors.destructive} />
-                </Pressable>
               </View>
             ) : null}
             {warnings.length > 0 ? (
@@ -771,7 +756,7 @@ export default function HomeScreen() {
               <Text style={[styles.listTitle, { color: colors.primary }]}>Najnovije</Text>
               <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{visibleStories.length} priča</Text>
             </View>
-            {visibleStories.length === 0 ? <EmptyState onRefresh={refresh} /> : null}
+            {visibleStories.length === 0 ? <EmptyState /> : null}
           </View>
         }
         renderItem={({ item }) => (
