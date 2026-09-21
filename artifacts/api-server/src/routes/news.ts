@@ -1,13 +1,13 @@
-import { Router, type IRouter } from "express";
+import { Router, type Request, type Response } from "express";
 import {
   ListNewsSourcesResponse,
   RefreshNewsResponse,
 } from "@workspace/api-zod";
 import { NEWS_SOURCES, refreshNews } from "../lib/news";
 
-const router: IRouter = Router();
+const router = Router();
 
-router.get("/news/sources", (_req, res): void => {
+router.get("/news/sources", (_req: Request, res: Response): void => {
   res.json(
     ListNewsSourcesResponse.parse(
       NEWS_SOURCES.map(({ id, name, url, status }) => ({
@@ -20,39 +20,42 @@ router.get("/news/sources", (_req, res): void => {
   );
 });
 
-router.post("/news/refresh", async (req, res): Promise<void> => {
-  try {
-    const result = await refreshNews();
-    if (result.items.length === 0) {
-      res.status(502).json({
-        error: "Nijedan izvor nije vratio čitljivu vijest.",
-        warnings: result.warnings,
-      });
-      return;
-    }
+router.post(
+  "/news/refresh",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const result = await refreshNews();
+      if (result.items.length === 0) {
+        res.status(502).json({
+          error: "Nijedan izvor nije vratio čitljivu vijest.",
+          warnings: result.warnings,
+        });
+        return;
+      }
 
-    res.json(
-      RefreshNewsResponse.parse({
-        ...result,
-        refreshedAt: new Date(),
-        sources: result.sources.map(({ id, name, url, status }) => ({
-          id,
-          name,
-          url,
-          status,
-        })),
-      }),
-    );
-  } catch (error) {
-    req.log.error({ err: error }, "News refresh failed");
-    res.status(502).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Osvježavanje vijesti nije uspjelo.",
-      warnings: [],
-    });
-  }
-});
+      res.json(
+        RefreshNewsResponse.parse({
+          ...result,
+          refreshedAt: new Date(),
+          sources: result.sources.map(({ id, name, url, status }) => ({
+            id,
+            name,
+            url,
+            status,
+          })),
+        }),
+      );
+    } catch (error) {
+      req.log.error({ err: error }, "News refresh failed");
+      res.status(502).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Osvježavanje vijesti nije uspjelo.",
+        warnings: [],
+      });
+    }
+  },
+);
 
 export default router;
