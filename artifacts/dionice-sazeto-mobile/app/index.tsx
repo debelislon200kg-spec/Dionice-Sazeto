@@ -373,7 +373,7 @@ function MarketStatus() {
         style={({ pressed }) => [styles.marketHeader, pressed && styles.pressed]}
       >
         <View style={styles.marketHeaderTitle}>
-          <Ionicons name="hourglass-outline" size={14} color={colors.marketForeground} />
+          <Ionicons name="hourglass-outline" size={14} color={colors.marketNow} />
           <Text style={[styles.marketHeaderLabel, { color: colors.marketForeground }]}>MARKET HOURS</Text>
         </View>
         <View style={styles.marketHeaderRight}>
@@ -813,8 +813,8 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: 'DMSans_500Medium', fontSize: 45, lineHeight: 45, letterSpacing: -2.4 },
   heroCopy: { fontFamily: 'DMSans_400Regular', fontSize: 14, lineHeight: 21, marginTop: 14, maxWidth: 325 },
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
-  marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27, position: 'relative' },
-  marketHeaderTitle: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
+  marketHeaderTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   marketHeaderLabel: { fontFamily: 'SpaceMono_700Bold', fontSize: 9, letterSpacing: 1.25 },
   marketHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   marketClock: { fontFamily: 'SpaceMono_400Regular', fontSize: 10 },
