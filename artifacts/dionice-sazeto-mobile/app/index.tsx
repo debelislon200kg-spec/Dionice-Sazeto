@@ -690,6 +690,7 @@ export default function HomeScreen() {
   const savedStoriesHydratedRef = useRef(false);
   const [savedStoriesReady, setSavedStoriesReady] = useState(false);
   const savedWriteQueueRef = useRef(Promise.resolve());
+  const [savedStorageError, setSavedStorageError] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const refreshMutation = useRefreshNews();
@@ -704,9 +705,11 @@ export default function HomeScreen() {
           const hydratedStories = Array.isArray(parsed) ? parsed.filter(isStoredStory) : [];
           savedStoriesRef.current = hydratedStories;
           setSavedStories(hydratedStories);
+          setSavedStorageError(false);
         } catch {
           savedStoriesRef.current = [];
           setSavedStories([]);
+          setSavedStorageError(true);
         } finally {
           savedStoriesHydratedRef.current = true;
           setSavedStoriesReady(true);
@@ -714,6 +717,7 @@ export default function HomeScreen() {
       })
       .catch(() => {
         if (cancelled) return;
+        setSavedStorageError(true);
         savedStoriesHydratedRef.current = true;
         setSavedStoriesReady(true);
       });
@@ -726,7 +730,9 @@ export default function HomeScreen() {
   const persistSavedStories = useCallback((nextStories: Story[]) => {
     savedWriteQueueRef.current = savedWriteQueueRef.current
       .catch(() => undefined)
-      .then(() => AsyncStorage.setItem(SAVED_STORIES_STORAGE_KEY, JSON.stringify(nextStories)));
+      .then(() => AsyncStorage.setItem(SAVED_STORIES_STORAGE_KEY, JSON.stringify(nextStories)))
+      .then(() => setSavedStorageError(false))
+      .catch(() => setSavedStorageError(true));
   }, []);
 
   const visibleStories = useMemo(
@@ -788,6 +794,14 @@ export default function HomeScreen() {
               <View style={[styles.feedback, { backgroundColor: colors.errorSurface, borderColor: colors.accent }]}>
                 <Feather name="alert-circle" size={16} color={colors.destructive} />
                 <Text style={[styles.feedbackText, { color: colors.destructive }]}>{refreshError}</Text>
+              </View>
+            ) : null}
+            {savedStorageError ? (
+              <View style={[styles.feedback, { backgroundColor: colors.errorSurface, borderColor: colors.accent }]}>
+                <Feather name="alert-circle" size={16} color={colors.destructive} />
+                <Text style={[styles.feedbackText, { color: colors.destructive }]}>
+                  Spremljene vijesti se trenutno ne mogu sačuvati na uređaju.
+                </Text>
               </View>
             ) : null}
             {warnings.length > 0 ? (
@@ -947,6 +961,7 @@ const styles = StyleSheet.create({
   emptyState: { borderWidth: 1, padding: 24, alignItems: 'center', marginBottom: 16 },
   emptyTitle: { fontFamily: 'DMSans_700Bold', fontSize: 17, marginTop: 12 },
   emptyCopy: { fontFamily: 'DMSans_400Regular', fontSize: 12, textAlign: 'center', marginTop: 6 },
+  disabled: { opacity: 0.5 },
   retryButton: { paddingHorizontal: 14, paddingVertical: 10, marginTop: 16 },
   retryText: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
   listEmptySpacer: { height: 20 },
