@@ -421,15 +421,17 @@ function MarketStatus() {
                   <View style={[styles.marketScale, { width: marketTimelineWidth }]}>
                     {marketTicks.map((tick, index) => (
                       <View style={[styles.marketTick, { left: index * MARKET_TICK_WIDTH }]} key={tick}>
-                        <Text
-                          style={[
-                            styles.marketTickLabel,
-                            index === marketTicks.length - 1 && styles.marketTickLabelEnd,
-                            { color: colors.marketForeground },
-                          ]}
-                        >
-                          {formatScaleTime(tick)}
-                        </Text>
+                        {tick % 60 !== 30 ? (
+                          <Text
+                            style={[
+                              styles.marketTickLabel,
+                              index === marketTicks.length - 1 && styles.marketTickLabelEnd,
+                              { color: colors.marketForeground },
+                            ]}
+                          >
+                            {formatScaleTime(tick)}
+                          </Text>
+                        ) : null}
                         <View style={[styles.marketTickLine, { backgroundColor: colors.marketForeground }]} />
                       </View>
                     ))}
