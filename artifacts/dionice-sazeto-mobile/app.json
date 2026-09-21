@@ -7,10 +7,21 @@
     "icon": "./assets/images/icon.png",
     "scheme": "dionice-sazeto-mobile",
     "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F4EC"
+    },
     "ios": {
       "supportsTablet": false
     },
-    "android": {},
+    "android": {
+      "package": "com.dionicesazeto.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#D9EF4A"
+      }
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },

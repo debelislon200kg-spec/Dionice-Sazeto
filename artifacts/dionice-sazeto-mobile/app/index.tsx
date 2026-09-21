@@ -1,0 +1,598 @@
+import { useCallback, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useRefreshNews } from '@workspace/api-client-react';
+import type { NewsItem } from '@workspace/api-client-react';
+import { useColors } from '@/hooks/useColors';
+
+type Direction = 'positive' | 'negative' | 'mixed';
+type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Makro' | 'Regija';
+
+type Story = {
+  id: string;
+  category: Exclude<Category, 'Sve'>;
+  source: string;
+  published: string;
+  readTime: string;
+  company: string;
+  ticker?: string;
+  title: string;
+  summary: string;
+  direction: Direction;
+  pressure: string;
+  articleUrl: string;
+  accent: 'lime' | 'coral' | 'blue' | 'amber' | 'violet';
+};
+
+const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Makro', 'Regija'];
+
+const fallbackStories: Story[] = [
+  {
+    id: 'fed-patience',
+    category: 'Makro',
+    source: 'Reuters',
+    published: 'Danas, 07:42',
+    readTime: '4 min',
+    company: 'Američki Fed',
+    title: 'Fed poručuje: sa snižavanjem kamata nema žurbe',
+    summary:
+      'Kamatne stope mogle bi ostati povišene dulje nego što su se ulagači nadali.',
+    direction: 'mixed',
+    pressure: 'Blagi pritisak prema dolje',
+    articleUrl: 'https://www.reuters.com/markets/us/',
+    accent: 'lime',
+  },
+  {
+    id: 'nvidia-demand',
+    category: 'Kompanije',
+    source: 'Financial Times',
+    published: 'Jučer, 18:16',
+    readTime: '3 min',
+    company: 'NVIDIA',
+    ticker: 'NVDA',
+    title: 'Nvidijini kupci i dalje šire AI kapacitete',
+    summary:
+      'Cloud igrači nastavljaju ulagati u podatkovne centre, ali očekivanja su visoka.',
+    direction: 'positive',
+    pressure: 'Mogući pritisak prema gore',
+    articleUrl: 'https://www.ft.com/technology',
+    accent: 'coral',
+  },
+  {
+    id: 'euro-stoxx',
+    category: 'Tržišta',
+    source: 'Bloomberg',
+    published: 'Jučer, 16:52',
+    readTime: '5 min',
+    company: 'Euro Stoxx 50',
+    ticker: 'SX5E',
+    title: 'Europske burze zastale blizu rekorda',
+    summary:
+      'Ulagači traže potvrdu u rezultatima kompanija, osobito u industriji i bankama.',
+    direction: 'mixed',
+    pressure: 'Neutralno do blago prema dolje',
+    articleUrl: 'https://www.bloomberg.com/markets',
+    accent: 'blue',
+  },
+  {
+    id: 'adidas-margin',
+    category: 'Kompanije',
+    source: 'The Wall Street Journal',
+    published: 'Jučer, 14:08',
+    readTime: '3 min',
+    company: 'Adidas',
+    ticker: 'ADS.DE',
+    title: 'Adidas podigao očekivanja nakon boljeg trenda prodaje',
+    summary:
+      'Manji pritisak popusta mogao bi pomoći maržama njemačkog proizvođača.',
+    direction: 'positive',
+    pressure: 'Mogući pritisak prema gore',
+    articleUrl: 'https://www.wsj.com/business',
+    accent: 'amber',
+  },
+];
+
+const marketRows = [
+  { name: 'Zagreb', code: 'ZSE', openFrom: 9, openUntil: 16 },
+  { name: 'Frankfurt', code: 'XETRA', openFrom: 9, openUntil: 18 },
+  { name: 'New York', code: 'NYSE', openFrom: 15, openUntil: 21 },
+];
+
+function categoryForItem(item: NewsItem): Exclude<Category, 'Sve'> {
+  const searchable = `${item.originalTitle} ${item.translatedTitle} ${item.company}`.toLowerCase();
+  if (/(fed|ecb|kamate|inflacij|interest rate|central bank|monetary)/.test(searchable)) {
+    return 'Makro';
+  }
+  if (/(europe|europa|eurozone|germany|njema|brussels|bruxelles)/.test(searchable)) {
+    return 'Regija';
+  }
+  if (item.ticker || item.company) return 'Kompanije';
+  return 'Tržišta';
+}
+
+function formatPublished(value: string | null): string {
+  if (!value) return 'Novo';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('hr-HR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function mapNewsItem(item: NewsItem, index: number): Story {
+  const accents: Story['accent'][] = ['lime', 'coral', 'blue', 'amber', 'violet'];
+  return {
+    id: item.id,
+    category: categoryForItem(item),
+    source: item.source,
+    published: formatPublished(item.publishedAt),
+    readTime: item.readTime,
+    company: item.company || 'Tržište',
+    ticker: item.ticker ?? undefined,
+    title: item.translatedTitle,
+    summary: item.summary,
+    direction: item.direction,
+    pressure: item.pressure,
+    articleUrl: item.articleUrl,
+    accent: accents[index % accents.length],
+  };
+}
+
+function DirectionIcon({
+  direction,
+  color,
+}: {
+  direction: Direction;
+  color: string;
+}) {
+  if (direction === 'positive') {
+    return <Feather name="trending-up" size={15} color={color} />;
+  }
+  if (direction === 'negative') {
+    return <Feather name="trending-down" size={15} color={color} />;
+  }
+  return <Text style={[styles.directionDash, { color }]}>—</Text>;
+}
+
+function Header({
+  isRefreshing,
+  onRefresh,
+}: {
+  isRefreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.border }]}>
+      <View style={styles.brandRow}>
+        <View style={[styles.brandMark, { backgroundColor: colors.secondary }]}>
+          <Text style={[styles.brandMarkText, { color: colors.primary }]}>DS</Text>
+        </View>
+        <View>
+          <Text style={[styles.brandName, { color: colors.foreground }]}>Dionice</Text>
+          <Text style={[styles.brandSubtitle, { color: colors.accent }]}>sažeto</Text>
+        </View>
+      </View>
+      <Pressable
+        accessibilityLabel="Osvježi pregled"
+        onPress={onRefresh}
+        disabled={isRefreshing}
+        testID="button-refresh-header"
+        style={({ pressed }) => [styles.headerButton, pressed && styles.pressed, { borderColor: colors.primary }]}
+      >
+        {isRefreshing ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Feather name="refresh-cw" size={17} color={colors.primary} />
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
+function MarketStatus() {
+  const colors = useColors();
+  const hour = new Date().getHours();
+  return (
+    <View style={[styles.marketCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={styles.marketHeader}>
+        <View style={styles.sectionEyebrow}>
+          <View style={[styles.eyebrowLine, { backgroundColor: colors.accent }]} />
+          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>MARKET HOURS</Text>
+        </View>
+        <Text style={[styles.marketClock, { color: colors.mutedForeground }]}>
+          {new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+      </View>
+      <View style={styles.marketList}>
+        {marketRows.map((market) => {
+          const open = hour >= market.openFrom && hour < market.openUntil;
+          return (
+            <View style={styles.marketRow} key={market.code}>
+              <View style={styles.marketName}>
+                <Text style={[styles.marketCity, { color: colors.foreground }]}>{market.name}</Text>
+                <Text style={[styles.marketCode, { color: colors.mutedForeground }]}>{market.code}</Text>
+              </View>
+              <View style={[styles.marketTrack, { backgroundColor: colors.muted }]}>
+                <View
+                  style={[
+                    styles.marketTrackActive,
+                    {
+                      backgroundColor: open ? colors.secondary : colors.border,
+                      width: open ? '58%' : '24%',
+                    },
+                  ]}
+                />
+              </View>
+              <View style={[styles.marketStatus, { backgroundColor: open ? colors.secondary : colors.muted }]}>
+                <View style={[styles.statusDot, { backgroundColor: open ? colors.primary : colors.mutedForeground }]} />
+                <Text style={[styles.marketStatusText, { color: colors.primary }]}>
+                  {open ? 'otvoreno' : 'zatvoreno'}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function FeaturedStory({
+  story,
+  saved,
+  onSave,
+  onOpen,
+}: {
+  story: Story;
+  saved: boolean;
+  onSave: () => void;
+  onOpen: () => void;
+}) {
+  const colors = useColors();
+  return (
+    <Pressable onPress={onOpen} style={({ pressed }) => [styles.featuredCard, pressed && styles.cardPressed, { backgroundColor: colors.primary }]}>
+      <View style={styles.featuredTopline}>
+        <View style={styles.featuredTag}>
+          <View style={[styles.liveDot, { backgroundColor: colors.secondary }]} />
+          <Text style={[styles.featuredTagText, { color: colors.secondary }]}>ISTAKNUTO</Text>
+        </View>
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation();
+            onSave();
+          }}
+          accessibilityLabel={saved ? 'Ukloni iz spremljenih' : 'Spremi članak'}
+          testID={`button-bookmark-${story.id}`}
+          style={({ pressed }) => [styles.bookmarkButton, pressed && styles.pressed]}
+        >
+          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={colors.secondary} />
+        </Pressable>
+      </View>
+      <Text style={[styles.featuredSource, { color: colors.secondary }]}>{story.source.toUpperCase()} · {story.published}</Text>
+      <Text style={[styles.featuredTitle, { color: colors.primaryForeground }]}>{story.title}</Text>
+      <Text style={[styles.featuredSummary, { color: colors.primaryForeground }]}>{story.summary}</Text>
+      <View style={styles.featuredFooter}>
+        <View style={styles.featuredPressure}>
+          <DirectionIcon direction={story.direction} color={colors.secondary} />
+          <Text style={[styles.featuredPressureText, { color: colors.primaryForeground }]}>{story.pressure}</Text>
+        </View>
+        <Feather name="arrow-up-right" size={17} color={colors.secondary} />
+      </View>
+    </Pressable>
+  );
+}
+
+function StoryCard({
+  story,
+  saved,
+  onSave,
+  onOpen,
+}: {
+  story: Story;
+  saved: boolean;
+  onSave: () => void;
+  onOpen: () => void;
+}) {
+  const colors = useColors();
+  const accent =
+    story.accent === 'coral'
+      ? colors.accent
+      : story.accent === 'blue'
+        ? colors.blue
+        : story.accent === 'amber'
+          ? colors.amber
+          : story.accent === 'violet'
+            ? colors.violet
+            : colors.secondary;
+  const directionColor = story.direction === 'positive' ? colors.positive : story.direction === 'negative' ? colors.destructive : colors.mutedForeground;
+  return (
+    <Pressable onPress={onOpen} style={({ pressed }) => [styles.storyCard, pressed && styles.cardPressed, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.storyAccent, { backgroundColor: accent }]} />
+      <View style={styles.storyContent}>
+        <View style={styles.storyTopline}>
+          <Text style={[styles.storyCompany, { color: colors.foreground }]}>{story.company}{story.ticker ? ` · ${story.ticker}` : ''}</Text>
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              onSave();
+            }}
+            accessibilityLabel={saved ? 'Ukloni iz spremljenih' : 'Spremi članak'}
+            testID={`button-bookmark-${story.id}`}
+            style={({ pressed }) => [styles.storyBookmark, pressed && styles.pressed]}
+          >
+            <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={18} color={saved ? colors.accent : colors.mutedForeground} />
+          </Pressable>
+        </View>
+        <Text style={[styles.storyMeta, { color: colors.mutedForeground }]}>{story.source.toUpperCase()} · {story.published} · {story.readTime}</Text>
+        <Text style={[styles.storyTitle, { color: colors.foreground }]}>{story.title}</Text>
+        <Text numberOfLines={2} style={[styles.storySummary, { color: colors.mutedForeground }]}>{story.summary}</Text>
+        <View style={styles.storyBottomline}>
+          <View style={[styles.directionBadge, { backgroundColor: colors.muted }]}>
+            <DirectionIcon direction={story.direction} color={directionColor} />
+            <Text style={[styles.directionText, { color: directionColor }]}>{story.pressure}</Text>
+          </View>
+          <Feather name="arrow-up-right" size={16} color={colors.mutedForeground} />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function EmptyState({ onRefresh }: { onRefresh: () => void }) {
+  const colors = useColors();
+  return (
+    <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Feather name="inbox" size={28} color={colors.mutedForeground} />
+      <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nema dostupnih vijesti</Text>
+      <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Pokušaj ponovno dohvatiti najnovije izvore.</Text>
+      <Pressable onPress={onRefresh} style={({ pressed }) => [styles.retryButton, pressed && styles.pressed, { backgroundColor: colors.secondary }]}>
+        <Text style={[styles.retryText, { color: colors.primary }]}>Pokušaj ponovno</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export default function HomeScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const [stories, setStories] = useState<Story[]>(fallbackStories);
+  const [activeCategory, setActiveCategory] = useState<Category>('Sve');
+  const [savedStories, setSavedStories] = useState<string[]>([]);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const refreshMutation = useRefreshNews();
+
+  const visibleStories = useMemo(
+    () => stories.filter((story) => activeCategory === 'Sve' || story.category === activeCategory),
+    [activeCategory, stories],
+  );
+
+  const refresh = useCallback(() => {
+    if (refreshMutation.isPending) return;
+    setRefreshError(null);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    refreshMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setStories(data.items.map(mapNewsItem));
+        setWarnings(data.warnings);
+      },
+      onError: (error) => {
+        setRefreshError(error instanceof Error ? error.message : 'Osvježavanje nije uspjelo.');
+      },
+    });
+  }, [refreshMutation]);
+
+  const openArticle = useCallback((url: string) => {
+    void Linking.openURL(url);
+  }, []);
+
+  const toggleSaved = useCallback((id: string) => {
+    Haptics.selectionAsync();
+    setSavedStories((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }, []);
+
+  const featured = visibleStories[0];
+  const listStories = featured ? visibleStories.slice(1) : [];
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <Header isRefreshing={refreshMutation.isPending} onRefresh={refresh} />
+      <FlatList
+        data={listStories}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={stories.length > 0}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshMutation.isPending}
+            onRefresh={refresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+        ListHeaderComponent={
+          <View style={styles.content}>
+            <View style={styles.intro}>
+              <View style={styles.sectionEyebrow}>
+                <View style={[styles.eyebrowLine, { backgroundColor: colors.accent }]} />
+                <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>JUTARNJI PREGLED</Text>
+              </View>
+              <Text style={[styles.heroTitle, { color: colors.primary }]}>Tržište, <Text style={{ color: colors.accent }}>sažeto.</Text></Text>
+              <Text style={[styles.heroCopy, { color: colors.mutedForeground }]}>Najvažnije vijesti za ulagače, prevedene u ono što stvarno znači za dionice.</Text>
+            </View>
+            <MarketStatus />
+            <View style={styles.sectionHeading}>
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>Pregled dana</Text>
+              <Text style={[styles.savedCount, { color: colors.mutedForeground }]}>{savedStories.length} spremljeno</Text>
+            </View>
+            {refreshError ? (
+              <View style={[styles.feedback, { backgroundColor: colors.errorSurface, borderColor: colors.accent }]}>
+                <Feather name="alert-circle" size={16} color={colors.destructive} />
+                <Text style={[styles.feedbackText, { color: colors.destructive }]}>{refreshError}</Text>
+                <Pressable onPress={refresh} accessibilityLabel="Pokušaj ponovno" style={styles.feedbackRetry}>
+                  <Feather name="refresh-cw" size={16} color={colors.destructive} />
+                </Pressable>
+              </View>
+            ) : null}
+            {warnings.length > 0 ? (
+              <View style={[styles.warning, { backgroundColor: colors.muted }]}>
+                <Feather name="info" size={15} color={colors.mutedForeground} />
+                <Text numberOfLines={2} style={[styles.warningText, { color: colors.mutedForeground }]}>{warnings[0]}</Text>
+              </View>
+            ) : null}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+              {categories.map((category) => {
+                const selected = category === activeCategory;
+                return (
+                  <Pressable
+                    key={category}
+                    onPress={() => {
+                      setActiveCategory(category);
+                      Haptics.selectionAsync();
+                    }}
+                    testID={`button-category-${category}`}
+                    style={({ pressed }) => [
+                      styles.categoryButton,
+                      pressed && styles.pressed,
+                      { backgroundColor: selected ? colors.primary : colors.card, borderColor: selected ? colors.primary : colors.border },
+                    ]}
+                  >
+                    <Text style={[styles.categoryText, { color: selected ? colors.primaryForeground : colors.mutedForeground }]}>{category}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {featured ? (
+              <FeaturedStory
+                story={featured}
+                saved={savedStories.includes(featured.id)}
+                onSave={() => toggleSaved(featured.id)}
+                onOpen={() => openArticle(featured.articleUrl)}
+              />
+            ) : null}
+            <View style={styles.listHeading}>
+              <Text style={[styles.listTitle, { color: colors.primary }]}>Najnovije</Text>
+              <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{visibleStories.length} priča</Text>
+            </View>
+            {visibleStories.length === 0 ? <EmptyState onRefresh={refresh} /> : null}
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.listItem}>
+            <StoryCard
+              story={item}
+              saved={savedStories.includes(item.id)}
+              onSave={() => toggleSaved(item.id)}
+              onOpen={() => openArticle(item.articleUrl)}
+            />
+          </View>
+        )}
+        ListEmptyComponent={visibleStories.length > 0 ? <View style={styles.listEmptySpacer} /> : null}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-5deg' }] },
+  brandMarkText: { fontFamily: 'SpaceMono_700Bold', fontSize: 11, letterSpacing: -1.5 },
+  brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
+  brandSubtitle: { fontFamily: 'DMSans_700Bold', fontSize: 16, lineHeight: 16, letterSpacing: -0.5 },
+  headerButton: { width: 38, height: 38, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  content: { paddingHorizontal: 20, paddingTop: 26 },
+  intro: { marginBottom: 23 },
+  sectionEyebrow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  eyebrowLine: { width: 22, height: 2 },
+  eyebrow: { fontFamily: 'SpaceMono_700Bold', fontSize: 9, letterSpacing: 1.4 },
+  heroTitle: { fontFamily: 'DMSans_500Medium', fontSize: 45, lineHeight: 45, letterSpacing: -2.4 },
+  heroCopy: { fontFamily: 'DMSans_400Regular', fontSize: 14, lineHeight: 21, marginTop: 14, maxWidth: 325 },
+  marketCard: { borderWidth: 1, padding: 14, marginBottom: 26 },
+  marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  marketClock: { fontFamily: 'SpaceMono_400Regular', fontSize: 10 },
+  marketList: { gap: 13 },
+  marketRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  marketName: { width: 73 },
+  marketCity: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
+  marketCode: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, marginTop: 2 },
+  marketTrack: { height: 5, flex: 1, overflow: 'hidden' },
+  marketTrackActive: { height: 5 },
+  marketStatus: { minWidth: 82, paddingVertical: 5, paddingHorizontal: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  statusDot: { width: 5, height: 5, borderRadius: 5 },
+  marketStatusText: { fontFamily: 'SpaceMono_700Bold', fontSize: 8, textTransform: 'uppercase' },
+  sectionHeading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
+  sectionTitle: { fontFamily: 'DMSans_700Bold', fontSize: 25, letterSpacing: -0.8 },
+  savedCount: { fontFamily: 'SpaceMono_400Regular', fontSize: 9 },
+  feedback: { borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, marginBottom: 10 },
+  feedbackText: { flex: 1, fontFamily: 'DMSans_500Medium', fontSize: 12, lineHeight: 17 },
+  feedbackRetry: { padding: 4 },
+  warning: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, marginBottom: 10 },
+  warningText: { flex: 1, fontFamily: 'DMSans_400Regular', fontSize: 11, lineHeight: 15 },
+  categoryRow: { gap: 8, paddingBottom: 17 },
+  categoryButton: { borderWidth: 1, paddingHorizontal: 13, paddingVertical: 8 },
+  categoryText: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
+  featuredCard: { padding: 18, marginBottom: 25 },
+  featuredTopline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 },
+  featuredTag: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  liveDot: { width: 6, height: 6, borderRadius: 6 },
+  featuredTagText: { fontFamily: 'SpaceMono_700Bold', fontSize: 9, letterSpacing: 1 },
+  bookmarkButton: { padding: 4 },
+  featuredSource: { fontFamily: 'SpaceMono_400Regular', fontSize: 9, letterSpacing: 0.4, marginBottom: 11 },
+  featuredTitle: { fontFamily: 'DMSans_700Bold', fontSize: 24, lineHeight: 27, letterSpacing: -0.8 },
+  featuredSummary: { fontFamily: 'DMSans_400Regular', fontSize: 13, lineHeight: 19, opacity: 0.78, marginTop: 12 },
+  featuredFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 21, paddingTop: 13, borderTopWidth: 1, borderTopColor: 'rgba(247,244,236,0.2)' },
+  featuredPressure: { flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1 },
+  featuredPressureText: { fontFamily: 'DMSans_500Medium', fontSize: 11, flex: 1 },
+  listHeading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
+  listTitle: { fontFamily: 'DMSans_700Bold', fontSize: 19, letterSpacing: -0.4 },
+  listCount: { fontFamily: 'SpaceMono_400Regular', fontSize: 9 },
+  listItem: { paddingHorizontal: 20, marginBottom: 10 },
+  storyCard: { flexDirection: 'row', borderWidth: 1, overflow: 'hidden' },
+  storyAccent: { width: 5 },
+  storyContent: { flex: 1, padding: 14 },
+  storyTopline: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  storyCompany: { fontFamily: 'DMSans_700Bold', fontSize: 12, flex: 1 },
+  storyBookmark: { padding: 3 },
+  storyMeta: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, letterSpacing: 0.3, marginTop: 7 },
+  storyTitle: { fontFamily: 'DMSans_700Bold', fontSize: 17, lineHeight: 20, letterSpacing: -0.3, marginTop: 9 },
+  storySummary: { fontFamily: 'DMSans_400Regular', fontSize: 12, lineHeight: 17, marginTop: 7 },
+  storyBottomline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, gap: 8 },
+  directionBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 7, paddingVertical: 5, flex: 1 },
+  directionText: { fontFamily: 'DMSans_500Medium', fontSize: 10, flex: 1 },
+  directionDash: { fontFamily: 'DMSans_700Bold', fontSize: 17, lineHeight: 15 },
+  emptyState: { borderWidth: 1, padding: 24, alignItems: 'center', marginBottom: 16 },
+  emptyTitle: { fontFamily: 'DMSans_700Bold', fontSize: 17, marginTop: 12 },
+  emptyCopy: { fontFamily: 'DMSans_400Regular', fontSize: 12, textAlign: 'center', marginTop: 6 },
+  retryButton: { paddingHorizontal: 14, paddingVertical: 10, marginTop: 16 },
+  retryText: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
+  listEmptySpacer: { height: 20 },
+  pressed: { opacity: 0.72 },
+  cardPressed: { opacity: 0.88 },
+});

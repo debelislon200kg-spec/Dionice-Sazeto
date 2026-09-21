@@ -2,3 +2,4 @@
 - [Vercel Express TypeScript emit](vercel-express-typescript-emit.md) — isolated Vercel compilation can report only “Emit skipped” for valid monorepo Express code.
 - [Vercel Node ESM imports](vercel-node-esm-imports.md) — Vercel’s transpiled Node runtime requires explicit `.js` extensions for relative ESM imports and rejects directory imports.
 - [Vercel workspace package runtime](vercel-workspace-package-runtime.md) — source-only workspace package exports can survive build but fail in Vercel’s Node runtime; keep deployed API dependencies self-contained or compiled.
+- [Expo workspace dependencies](expo-workspace-dependencies.md) — target mobile package installs with pnpm filter; workspace-root package installs can fail before touching the app.
