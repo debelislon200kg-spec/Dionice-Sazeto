@@ -118,9 +118,9 @@ const marketRows: MarketDefinition[] = [
   { name: 'London', code: 'LSE', timeZone: 'Europe/London', openHour: 8, openMinute: 0, closeHour: 16, closeMinute: 30 },
   { name: 'Pariz', code: 'EURONEXT', timeZone: 'Europe/Paris', openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 30 },
   { name: 'Milano', code: 'BORSA IT', timeZone: 'Europe/Rome', openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 30 },
-  { name: 'New York 1', code: 'NYSE', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
-  { name: 'New York Nasdaq', code: 'NASDAQ', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
-  { name: 'gettex', code: 'GETTEX', timeZone: 'Europe/Berlin', openHour: 7, openMinute: 30, closeHour: 23, closeMinute: 0 },
+  { name: 'New York', code: 'NYSE', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
+  { name: 'New York', code: 'NASDAQ', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
+  { name: '', code: 'GETTEX', timeZone: 'Europe/Berlin', openHour: 7, openMinute: 30, closeHour: 23, closeMinute: 0 },
 ];
 
 const MARKET_SCALE_START = 0;
