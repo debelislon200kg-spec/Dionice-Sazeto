@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -333,6 +333,7 @@ function MarketStatus() {
   const colors = useColors();
   const [now, setNow] = useState(() => new Date());
   const [expanded, setExpanded] = useState(false);
+  const timelineScrollRef = useRef<ScrollView | null>(null);
   const zagrebMinutes = minutesInTimeZone(now, 'Europe/Zagreb');
   const nowPosition = Math.min(
     marketTimelineWidth,
@@ -343,6 +344,17 @@ function MarketStatus() {
     const interval = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const timeout = setTimeout(() => {
+      timelineScrollRef.current?.scrollTo({
+        x: Math.max(0, nowPosition - 110),
+        animated: false,
+      });
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [expanded, nowPosition]);
 
   return (
     <View style={[styles.marketCard, { backgroundColor: colors.primary, borderColor: colors.primary }]}>
@@ -393,6 +405,7 @@ function MarketStatus() {
             </View>
             <View style={styles.marketTimelineViewport}>
               <ScrollView
+                ref={timelineScrollRef}
                 horizontal
                 showsHorizontalScrollIndicator
                 nestedScrollEnabled
@@ -408,17 +421,12 @@ function MarketStatus() {
                         <View style={[styles.marketTickLine, { backgroundColor: colors.primaryForeground }]} />
                       </View>
                     ))}
+                    <View style={[styles.marketScaleNowLine, { left: nowPosition, backgroundColor: colors.accent }]} />
                   </View>
                   {marketRows.map((market) => {
                     const window = marketWindowInZagreb(market, now);
-                    const openLeft = window
-                      ? Math.max(0, ((window.open - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH)
-                      : 0;
-                    const closeLeft = window
-                      ? Math.min(marketTimelineWidth, ((window.close - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH)
-                      : 0;
                     return (
-                      <View style={[styles.marketTrack, { width: marketTimelineWidth, backgroundColor: colors.muted }]} key={market.code}>
+                      <View style={[styles.marketTrack, { width: marketTimelineWidth, backgroundColor: colors.primary }]} key={market.code}>
                         <View style={[styles.marketTrackInset, { backgroundColor: colors.card }]}>
                           {marketIntervals.map((segmentStart, index) => {
                             const phase = phaseForMarketSegment(segmentStart, window);
@@ -793,17 +801,18 @@ const styles = StyleSheet.create({
   marketCity: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
   marketCode: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, marginTop: 2 },
   marketTimelineViewport: { flex: 1, minWidth: 0, overflow: 'hidden' },
-  marketScale: { height: 32, flexDirection: 'row', alignItems: 'flex-start' },
+  marketScale: { height: 32, flexDirection: 'row', alignItems: 'flex-start', position: 'relative' },
   marketTick: { width: MARKET_TICK_WIDTH, height: 32, alignItems: 'center', position: 'relative' },
   marketTickLabel: { position: 'absolute', top: 1, left: -13, width: 50, textAlign: 'center', fontFamily: 'SpaceMono_400Regular', fontSize: 7 },
   marketTickLine: { position: 'absolute', bottom: 0, width: 1, height: 8, opacity: 0.55 },
+  marketScaleNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, zIndex: 3 },
   marketTrack: { height: 35, position: 'relative', justifyContent: 'center', overflow: 'hidden' },
-  marketGridTick: { position: 'absolute', top: 0, bottom: 0, width: 1, opacity: 0.18 },
-  marketOpenWindow: { position: 'absolute', top: 10, bottom: 10, opacity: 0.95 },
-  marketNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, opacity: 0.95 },
+  marketTrackInset: { position: 'absolute', left: 0, right: 0, top: 8, bottom: 8 },
+  marketSegment: { position: 'absolute', top: 1, bottom: 1 },
+  marketNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, opacity: 0.95, zIndex: 4 },
   marketStatusRow: { height: 35, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   statusDot: { width: 5, height: 5, borderRadius: 5 },
-  marketStatusText: { fontFamily: 'SpaceMono_700Bold', fontSize: 8, textTransform: 'lowercase' },
+  marketStatusText: { fontFamily: 'SpaceMono_700Bold', fontSize: 8 },
   marketLegend: { flexDirection: 'row', alignItems: 'center', gap: 15, marginTop: 10 },
   marketLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendBar: { width: 12, height: 3 },
