@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/dionice-sazeto-mobile/"
+title = "Dionice sažeto Mobile"
+description = "Početna Expo mobilna aplikacija za Dionice sažeto, s mobilnim pregledom tržišta, kratkim vijestima i ručnim osvježavanjem izvora."
+version = "1.0.0"
+id = "artifacts/dionice-sazeto-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/dionice-sazeto-mobile/" ]
+localPort = 19946
+
+[services.development]
+run = "pnpm --filter @workspace/dionice-sazeto-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dionice-sazeto-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/dionice-sazeto-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "19946"
+BASE_PATH = "/dionice-sazeto-mobile/"
