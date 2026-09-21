@@ -489,18 +489,12 @@ function MarketStatus() {
                   isWeekdayInTimeZone(now, market.timeZone) &&
                   localMinutes >= market.openHour * 60 + market.openMinute &&
                   localMinutes < market.closeHour * 60 + market.closeMinute;
+                const statusColor = open ? colors.marketOpen : colors.marketClosed;
                 return (
                   <View style={styles.marketStatusRow} key={market.code}>
-                    <View
-                      style={[
-                        styles.marketStatusBadge,
-                        { backgroundColor: colors.marketBackground, borderColor: colors.marketForeground },
-                      ]}
-                    >
-                      <Text style={[styles.marketStatusText, { color: colors.marketForeground }]}>
-                        {open ? 'OTVORENO' : 'ZATVORENO'}
-                      </Text>
-                    </View>
+                    <Text style={[styles.marketStatusText, { color: statusColor }]}>
+                      {open ? 'OTVORENO' : 'ZATVORENO'}
+                    </Text>
                   </View>
                 );
               })}
@@ -838,9 +832,8 @@ const styles = StyleSheet.create({
   marketSegment: { position: 'absolute', top: 1, bottom: 1 },
   marketGridTick: { position: 'absolute', top: 0, bottom: 0, width: 1, opacity: 0.35, zIndex: 2 },
   marketNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, opacity: 0.95, zIndex: 4 },
-  marketStatusRow: { width: '100%', height: 35 },
-  marketStatusBadge: { width: '100%', height: 35, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-  marketStatusText: { fontFamily: 'SpaceMono_700Bold', fontSize: 8, textAlign: 'center' },
+  marketStatusRow: { width: '100%', height: 35, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
+  marketStatusText: { fontFamily: 'SpaceMono_700Bold', fontSize: 8, textAlign: 'right' },
   marketLegend: { flexDirection: 'row', alignItems: 'center', gap: 15, marginTop: 10 },
   marketLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendBar: { width: 12, height: 3 },
