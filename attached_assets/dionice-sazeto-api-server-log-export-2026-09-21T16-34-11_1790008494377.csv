@@ -1,0 +1,222 @@
+TimeUTC,timestampInMs,requestPath,requestMethod,requestQueryString,responseStatusCode,requestId,requestUserAgent,level,environment,branch,vercelCache,type,function,host,deploymentDomain,deploymentId,durationMs,region,maxMemoryUsed,memorySize,message,projectId,traceId,sessionId,invocationId,instanceId,concurrency,workflowRunId,workflowStepId
+2026-09-21 16:32:40,1790008360601,dionice-sazeto-api-server.vercel.app/,GET,,500,vmn58-1790008360359-2b611549a509,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,info,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:40,1790008360359,dionice-sazeto-api-server.vercel.app/,GET,,500,vmn58-1790008360359-2b611549a509,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,166,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZZF11D27TRSQY2C3ZKF2,,-1,,
+2026-09-21 16:32:37,1790008357847,dionice-sazeto-api-server.vercel.app/,GET,,500,gk74l-1790008357483-416af02276c8,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,info,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:37,1790008357483,dionice-sazeto-api-server.vercel.app/,GET,,500,gk74l-1790008357483-416af02276c8,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,168,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZWRZTF120PXP8SNFTTC5,,-1,,
+2026-09-21 16:32:34,1790008354662,dionice-sazeto-api-server.vercel.app/,GET,,500,bnpqf-1790008354419-d9c1120561cb,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,info,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:34,1790008354419,dionice-sazeto-api-server.vercel.app/,GET,,500,bnpqf-1790008354419-d9c1120561cb,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,168,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZSN8QYP73CGSGSF0BQKJ,,-1,,
+2026-09-21 16:32:31,1790008351868,dionice-sazeto-api-server.vercel.app/,GET,,500,7l2vp-1790008351410-cc6b31dfe5c9,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,info,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:31,1790008351410,dionice-sazeto-api-server.vercel.app/,GET,,500,7l2vp-1790008351410-cc6b31dfe5c9,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,168,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZPY626FE67WQZVB2PD10,,-1,,
+2026-09-21 16:32:29,1790008349064,dionice-sazeto-api-server.vercel.app/favicon.ico,GET,,500,kj8mj-1790008348695-d4a972504ce0,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,info,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:28,1790008348695,dionice-sazeto-api-server.vercel.app/favicon.ico,GET,,500,kj8mj-1790008348695-d4a972504ce0,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,171,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZM688P5T0S1P0MB23WXY,,-1,,
+2026-09-21 16:32:28,1790008348457,dionice-sazeto-api-server.vercel.app/,GET,,500,jxk6w-1790008348054-34c339bea1f9,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,info,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:28,1790008348054,dionice-sazeto-api-server.vercel.app/,GET,,500,jxk6w-1790008348054-34c339bea1f9,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0,,production,main,MISS,function,/,dionice-sazeto-api-server.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,183,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZKK0AKTW6JG5G9WD2KBR,,-1,,
+2026-09-21 16:32:19,1790008339255,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/,GET,,500,s78qd-1790008338928-dbc48180d2f9,"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.0 Safari/537.36",info,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:18,1790008338928,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/,GET,,500,s78qd-1790008338928-dbc48180d2f9,"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.0 Safari/537.36",,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,171,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZAKVTWXJ7A6H144RJR6W,,-1,,
+2026-09-21 16:32:19,1790008339086,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/,GET,,500,bvlfj-1790008338661-d3c346128c73,"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.0 Safari/537.36",info,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:18,1790008338661,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/,GET,,500,bvlfj-1790008338661-d3c346128c73,"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.0 Safari/537.36",,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,149,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZAF5Z1RJJSNJ23HV606T,,-1,,
+2026-09-21 16:32:11,1790008331390,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/,GET,,500,dt5bj-1790008330546-a3bfa0e31728,vercel-favicon/1.0,info,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:10,1790008330546,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/,GET,,500,dt5bj-1790008330546-a3bfa0e31728,vercel-favicon/1.0,,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,150,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZ2EQWA9V4W1TH0Z8AGH9,,-1,,
+2026-09-21 16:32:11,1790008331318,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/favicon.png,GET,,500,2kn2x-1790008330542-b790355c9b2c,vercel-favicon/1.0,info,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:10,1790008330542,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/favicon.png,GET,,500,2kn2x-1790008330542-b790355c9b2c,vercel-favicon/1.0,,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,179,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZ2EMFC0HF8BZKNEV0P1Q,,-1,,
+2026-09-21 16:32:11,1790008331277,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/favicon.ico,GET,,500,2sg4j-1790008330539-6d7157023721,vercel-favicon/1.0,info,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,,,,,"Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/var/task/artifacts/api-server/src/routes' is not supported resolving ES modules imported from /var/task/artifacts/api-server/src/app.js
+    at finalizeResolution (node:internal/modules/esm/resolve:266:11)
+    at moduleResolve (node:internal/modules/esm/resolve:885:10)
+    at moduleResolveWithNodePath (node:internal/modules/esm/resolve:1012:14)
+    at defaultResolve (node:internal/modules/esm/resolve:1055:79)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_UNSUPPORTED_DIR_IMPORT',
+  url: 'file:///var/task/artifacts/api-server/src/routes'
+}
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,,,,,
+2026-09-21 16:32:10,1790008330539,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app/favicon.ico,GET,,500,2sg4j-1790008330539-6d7157023721,vercel-favicon/1.0,,production,main,MISS,function,/,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dionice-sazeto-api-server-r4p3efpk4-skp22.vercel.app,dpl_EwKB3fTms9mFFnmXPrrxpjNWf9mH,169,iad1,-1,2048,,prj_My1SLGo6jsqYcbdABJksZI8OuW1h,,,01M32CZ2E5AJGEKH84ZYP4FFSG,,-1,,
