@@ -432,7 +432,13 @@ function MarketStatus() {
                             {formatScaleTime(tick)}
                           </Text>
                         ) : null}
-                        <View style={[styles.marketTickLine, { backgroundColor: colors.marketForeground }]} />
+                        <View
+                          style={[
+                            styles.marketTickLine,
+                            tick % 60 === 0 && styles.marketTickLineFullHour,
+                            { backgroundColor: colors.marketForeground },
+                          ]}
+                        />
                       </View>
                     ))}
                     <View style={[styles.marketScaleNowLine, { left: nowPosition, backgroundColor: colors.marketNow }]} />
@@ -827,6 +833,7 @@ const styles = StyleSheet.create({
   marketTickLabel: { position: 'absolute', top: 1, left: -25, width: 50, textAlign: 'center', fontFamily: 'SpaceMono_400Regular', fontSize: 9.6 },
   marketTickLabelEnd: { left: -50, textAlign: 'right' },
   marketTickLine: { position: 'absolute', left: 0, bottom: 0, width: 1, height: 8, opacity: 0.55 },
+  marketTickLineFullHour: { height: 11.2 },
   marketScaleNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, zIndex: 3 },
   marketTrack: { height: 35, position: 'relative', justifyContent: 'center', overflow: 'hidden' },
   marketTrackInset: { position: 'absolute', left: 0, right: 0, top: 8, bottom: 8 },
