@@ -569,7 +569,7 @@ function FeaturedStory({
           testID={`button-bookmark-${story.id}`}
           style={({ pressed }) => [styles.bookmarkButton, pressed && styles.pressed]}
         >
-          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={colors.secondary} />
+          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={colors.marketForeground} />
         </Pressable>
       </View>
       <Text style={[styles.featuredSource, { color: colors.marketForeground }]}>{story.source.toUpperCase()} · {story.published}</Text>
