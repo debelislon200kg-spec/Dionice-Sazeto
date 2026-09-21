@@ -867,6 +867,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  disabled: { opacity: 0.55 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
