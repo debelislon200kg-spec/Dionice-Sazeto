@@ -558,7 +558,7 @@ function FeaturedStory({
       <View style={styles.featuredTopline}>
         <View style={styles.featuredTag}>
           <View style={[styles.liveDot, { backgroundColor: colors.secondary }]} />
-          <Text style={[styles.featuredTagText, { color: colors.secondary }]}>ISTAKNUTO</Text>
+          <Text style={[styles.featuredTagText, { color: colors.tint }]}>ISTAKNUTO</Text>
         </View>
         <Pressable
           onPress={(event) => {
