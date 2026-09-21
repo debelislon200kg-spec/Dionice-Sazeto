@@ -5,7 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { NewsSourceStatus } from './newsSourceStatus';
+import type { NewsSourceStatus } from './newsSourceStatus.js';
 
 export interface NewsSource {
   id: string;

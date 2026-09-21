@@ -5,8 +5,8 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { NewsItem } from './newsItem';
-import type { NewsSource } from './newsSource';
+import type { NewsItem } from './newsItem.js';
+import type { NewsSource } from './newsSource.js';
 
 export interface NewsRefreshResponse {
   items: NewsItem[];

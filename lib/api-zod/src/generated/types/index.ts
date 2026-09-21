@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export * from './healthStatus';
-export * from './newsItem';
-export * from './newsItemDirection';
-export * from './newsRefreshError';
-export * from './newsRefreshResponse';
-export * from './newsSource';
-export * from './newsSourceStatus';
+export * from './healthStatus.js';
+export * from './newsItem.js';
+export * from './newsItemDirection.js';
+export * from './newsRefreshError.js';
+export * from './newsRefreshResponse.js';
+export * from './newsSource.js';
+export * from './newsSourceStatus.js';
