@@ -421,7 +421,13 @@ function MarketStatus() {
                   <View style={[styles.marketScale, { width: marketTimelineWidth }]}>
                     {marketTicks.map((tick, index) => (
                       <View style={[styles.marketTick, { left: index * MARKET_TICK_WIDTH }]} key={tick}>
-                        <Text style={[styles.marketTickLabel, { color: colors.marketForeground }]}>
+                        <Text
+                          style={[
+                            styles.marketTickLabel,
+                            index === marketTicks.length - 1 && styles.marketTickLabelEnd,
+                            { color: colors.marketForeground },
+                          ]}
+                        >
                           {formatScaleTime(tick)}
                         </Text>
                         <View style={[styles.marketTickLine, { backgroundColor: colors.marketForeground }]} />
@@ -816,14 +822,16 @@ const styles = StyleSheet.create({
   marketCity: { fontFamily: 'DMSans_700Bold', fontSize: 11 },
   marketCode: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, marginTop: 2 },
   marketTimelineViewport: { flex: 1, minWidth: 0, overflow: 'hidden' },
-  marketScale: { height: 32, flexDirection: 'row', alignItems: 'flex-start', position: 'relative' },
-  marketTick: { width: MARKET_TICK_WIDTH, height: 32, alignItems: 'center', position: 'relative' },
-  marketTickLabel: { position: 'absolute', top: 1, left: -13, width: 50, textAlign: 'center', fontFamily: 'SpaceMono_400Regular', fontSize: 7 },
-  marketTickLine: { position: 'absolute', bottom: 0, width: 1, height: 8, opacity: 0.55 },
+  marketScale: { height: 32, position: 'relative' },
+  marketTick: { width: 0, height: 32, position: 'absolute', top: 0 },
+  marketTickLabel: { position: 'absolute', top: 1, left: -25, width: 50, textAlign: 'center', fontFamily: 'SpaceMono_400Regular', fontSize: 7 },
+  marketTickLabelEnd: { left: -50, textAlign: 'right' },
+  marketTickLine: { position: 'absolute', left: 0, bottom: 0, width: 1, height: 8, opacity: 0.55 },
   marketScaleNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, zIndex: 3 },
   marketTrack: { height: 35, position: 'relative', justifyContent: 'center', overflow: 'hidden' },
   marketTrackInset: { position: 'absolute', left: 0, right: 0, top: 8, bottom: 8 },
   marketSegment: { position: 'absolute', top: 1, bottom: 1 },
+  marketGridTick: { position: 'absolute', top: 0, bottom: 0, width: 1, opacity: 0.35, zIndex: 2 },
   marketNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, opacity: 0.95, zIndex: 4 },
   marketStatusRow: { height: 35, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   statusDot: { width: 5, height: 5, borderRadius: 5 },
