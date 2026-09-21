@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai } from "./openai.js";
 import { createHash } from "node:crypto";
 
 export type NewsSourceStatus = "configured" | "partial" | "unavailable";
