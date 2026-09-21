@@ -481,7 +481,6 @@ function MarketStatus() {
             </View>
             <View style={styles.marketStatusColumn}>
               <View style={styles.marketColumnHeader}>
-                <Text style={[styles.marketColumnHeaderText, { color: colors.marketForeground }]}>STATUS</Text>
               </View>
               {marketRows.map((market) => {
                 const localMinutes = minutesInTimeZone(now, market.timeZone);
