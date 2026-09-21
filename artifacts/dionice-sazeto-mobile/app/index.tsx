@@ -17,6 +17,7 @@ import { useRefreshNews } from '@workspace/api-client-react';
 import type { NewsItem } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useSavedStories, type SavedStory } from '@/contexts/SavedStoriesContext';
+import { storySentimentTone } from '@/lib/storySentiment';
 
 type Direction = 'positive' | 'negative' | 'mixed';
 type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Ekonomija' | 'Sektori';
@@ -590,17 +591,18 @@ function StoryCard({
   disabled?: boolean;
 }) {
   const colors = useColors();
+  const sentimentTone = storySentimentTone(story);
   const accent =
-    story.accent === 'coral'
-      ? colors.accent
-      : story.accent === 'blue'
-        ? colors.blue
-        : story.accent === 'amber'
-          ? colors.amber
-          : story.accent === 'violet'
-            ? colors.violet
-            : colors.secondary;
-  const directionColor = story.direction === 'positive' ? colors.positive : story.direction === 'negative' ? colors.destructive : colors.mutedForeground;
+    sentimentTone === 'positive'
+      ? colors.positive
+      : sentimentTone === 'positiveSoft'
+        ? colors.positiveSoft
+        : sentimentTone === 'negative'
+          ? colors.destructive
+          : sentimentTone === 'warning'
+            ? colors.amber
+            : colors.mutedForeground;
+  const directionColor = accent;
   return (
     <Pressable onPress={onOpen} style={({ pressed }) => [styles.storyCard, pressed && styles.cardPressed, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={[styles.storyAccent, { backgroundColor: accent }]} />

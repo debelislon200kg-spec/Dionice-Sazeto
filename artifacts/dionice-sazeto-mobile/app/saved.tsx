@@ -14,6 +14,7 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useSavedStories, type SavedStory } from '@/contexts/SavedStoriesContext';
+import { storySentimentTone } from '@/lib/storySentiment';
 
 function DirectionIcon({ direction, color }: { direction: SavedStory['direction']; color: string }) {
   if (direction === 'positive') return <Feather name="trending-up" size={15} color={color} />;
@@ -31,22 +32,18 @@ function SavedStoryCard({
   onRemove: () => void;
 }) {
   const colors = useColors();
+  const sentimentTone = storySentimentTone(story);
   const accent =
-    story.accent === 'coral'
-      ? colors.accent
-      : story.accent === 'blue'
-        ? colors.blue
-        : story.accent === 'amber'
-          ? colors.amber
-          : story.accent === 'violet'
-            ? colors.violet
-            : colors.secondary;
-  const directionColor =
-    story.direction === 'positive'
+    sentimentTone === 'positive'
       ? colors.positive
-      : story.direction === 'negative'
-        ? colors.destructive
-        : colors.mutedForeground;
+      : sentimentTone === 'positiveSoft'
+        ? colors.positiveSoft
+        : sentimentTone === 'negative'
+          ? colors.destructive
+          : sentimentTone === 'warning'
+            ? colors.amber
+            : colors.mutedForeground;
+  const directionColor = accent;
 
   return (
     <Pressable
