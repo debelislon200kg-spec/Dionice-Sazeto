@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -104,11 +104,112 @@ const fallbackStories: Story[] = [
   },
 ];
 
-const marketRows = [
-  { name: 'Zagreb', code: 'ZSE', openFrom: 9, openUntil: 16 },
-  { name: 'Frankfurt', code: 'XETRA', openFrom: 9, openUntil: 18 },
-  { name: 'New York', code: 'NYSE', openFrom: 15, openUntil: 21 },
+type MarketDefinition = {
+  name: string;
+  code: string;
+  timeZone: string;
+  openHour: number;
+  openMinute: number;
+  closeHour: number;
+  closeMinute: number;
+};
+
+const marketRows: MarketDefinition[] = [
+  { name: 'London', code: 'LSE', timeZone: 'Europe/London', openHour: 8, openMinute: 0, closeHour: 16, closeMinute: 30 },
+  { name: 'gettex', code: 'GETTEX', timeZone: 'Europe/Berlin', openHour: 7, openMinute: 30, closeHour: 23, closeMinute: 0 },
+  { name: 'Pariz', code: 'EURONEXT', timeZone: 'Europe/Paris', openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 30 },
+  { name: 'Milano', code: 'BORSA IT', timeZone: 'Europe/Rome', openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 30 },
+  { name: 'New York', code: 'NYSE', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
+  { name: 'New York', code: 'NASDAQ', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
 ];
+
+const MARKET_SCALE_START = 6 * 60;
+const MARKET_SCALE_END = 23 * 60;
+const MARKET_TICK_MINUTES = 15;
+const MARKET_TICK_WIDTH = 24;
+const marketTicks = Array.from(
+  { length: (MARKET_SCALE_END - MARKET_SCALE_START) / MARKET_TICK_MINUTES + 1 },
+  (_, index) => MARKET_SCALE_START + index * MARKET_TICK_MINUTES,
+);
+const marketTimelineWidth = marketTicks.length * MARKET_TICK_WIDTH;
+
+function getTimeZonePart(date: Date, timeZone: string, type: Intl.DateTimeFormatPartTypes): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date).find((part) => part.type === type)?.value ?? '';
+}
+
+function minutesInTimeZone(date: Date, timeZone: string): number {
+  const hour = Number(getTimeZonePart(date, timeZone, 'hour'));
+  const minute = Number(getTimeZonePart(date, timeZone, 'minute'));
+  return hour * 60 + minute;
+}
+
+function isWeekdayInTimeZone(date: Date, timeZone: string): boolean {
+  const weekday = getTimeZonePart(date, timeZone, 'weekday');
+  return weekday !== 'Sat' && weekday !== 'Sun';
+}
+
+function localTimeAsInstant(
+  date: Date,
+  timeZone: string,
+  hour: number,
+  minute: number,
+): Date {
+  const localYear = Number(getTimeZonePart(date, timeZone, 'year'));
+  const localMonth = Number(getTimeZonePart(date, timeZone, 'month'));
+  const localDay = Number(getTimeZonePart(date, timeZone, 'day'));
+  const zagrebYear = Number(getTimeZonePart(date, 'Europe/Zagreb', 'year'));
+  const zagrebMonth = Number(getTimeZonePart(date, 'Europe/Zagreb', 'month'));
+  const zagrebDay = Number(getTimeZonePart(date, 'Europe/Zagreb', 'day'));
+  const localWall = Date.UTC(localYear, localMonth - 1, localDay, hour, minute);
+  const zagrebWall = Date.UTC(
+    zagrebYear,
+    zagrebMonth - 1,
+    zagrebDay,
+    Number(getTimeZonePart(date, 'Europe/Zagreb', 'hour')),
+    Number(getTimeZonePart(date, 'Europe/Zagreb', 'minute')),
+  );
+  const currentLocalWall = Date.UTC(
+    localYear,
+    localMonth - 1,
+    localDay,
+    Number(getTimeZonePart(date, timeZone, 'hour')),
+    Number(getTimeZonePart(date, timeZone, 'minute')),
+  );
+  const zoneDifference = (currentLocalWall - zagrebWall) / 60_000;
+  return new Date(localWall - zoneDifference * 60_000);
+}
+
+function marketWindowInZagreb(
+  market: MarketDefinition,
+  now: Date,
+): { open: number; close: number } | null {
+  if (!isWeekdayInTimeZone(now, market.timeZone)) return null;
+  return {
+    open: minutesInTimeZone(
+      localTimeAsInstant(now, market.timeZone, market.openHour, market.openMinute),
+      'Europe/Zagreb',
+    ),
+    close: minutesInTimeZone(
+      localTimeAsInstant(now, market.timeZone, market.closeHour, market.closeMinute),
+      'Europe/Zagreb',
+    ),
+  };
+}
+
+function formatScaleTime(minutes: number): string {
+  const hour = Math.floor(minutes / 60).toString().padStart(2, '0');
+  const minute = (minutes % 60).toString().padStart(2, '0');
+  return `${hour}:${minute}`;
+}
 
 function categoryForItem(item: NewsItem): Exclude<Category, 'Sve'> {
   const searchable = `${item.originalTitle} ${item.translatedTitle} ${item.company}`.toLowerCase();
@@ -208,48 +309,156 @@ function Header({
 
 function MarketStatus() {
   const colors = useColors();
-  const hour = new Date().getHours();
+  const [now, setNow] = useState(() => new Date());
+  const [expanded, setExpanded] = useState(false);
+  const zagrebMinutes = minutesInTimeZone(now, 'Europe/Zagreb');
+  const nowPosition = Math.min(
+    marketTimelineWidth,
+    Math.max(0, ((zagrebMinutes - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <View style={[styles.marketCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={styles.marketHeader}>
-        <View style={styles.sectionEyebrow}>
+    <View style={[styles.marketCard, { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={expanded ? 'Zatvori Market Hours' : 'Otvori Market Hours'}
+        onPress={() => setExpanded((current) => !current)}
+        testID="button-market-hours"
+        style={({ pressed }) => [styles.marketHeader, pressed && styles.pressed]}
+      >
+        <View style={styles.marketHeaderTitle}>
           <View style={[styles.eyebrowLine, { backgroundColor: colors.accent }]} />
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>MARKET HOURS</Text>
+          <Text style={[styles.marketHeaderLabel, { color: colors.primaryForeground }]}>MARKET HOURS</Text>
         </View>
-        <Text style={[styles.marketClock, { color: colors.mutedForeground }]}>
-          {new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}
-        </Text>
-      </View>
-      <View style={styles.marketList}>
-        {marketRows.map((market) => {
-          const open = hour >= market.openFrom && hour < market.openUntil;
-          return (
-            <View style={styles.marketRow} key={market.code}>
-              <View style={styles.marketName}>
-                <Text style={[styles.marketCity, { color: colors.foreground }]}>{market.name}</Text>
-                <Text style={[styles.marketCode, { color: colors.mutedForeground }]}>{market.code}</Text>
+        <View style={styles.marketHeaderRight}>
+          <Text style={[styles.marketClock, { color: colors.primaryForeground }]}>
+            {new Intl.DateTimeFormat('hr-HR', {
+              timeZone: 'Europe/Zagreb',
+              hour: '2-digit',
+              minute: '2-digit',
+              hourCycle: 'h23',
+            }).format(now)}
+          </Text>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={17}
+            color={colors.primaryForeground}
+          />
+        </View>
+      </Pressable>
+      {expanded ? (
+        <View style={styles.marketExpanded}>
+          <Text style={[styles.marketScaleCaption, { color: colors.primaryForeground }]}>
+            ZAGREB TIME · PODJELE 15 MIN
+          </Text>
+          <View style={styles.marketTimelineGrid}>
+            <View style={styles.marketFixedColumn}>
+              <View style={styles.marketColumnHeader}>
+                <Text style={[styles.marketColumnHeaderText, { color: colors.primaryForeground }]}>BURZA</Text>
               </View>
-              <View style={[styles.marketTrack, { backgroundColor: colors.muted }]}>
-                <View
-                  style={[
-                    styles.marketTrackActive,
-                    {
-                      backgroundColor: open ? colors.secondary : colors.border,
-                      width: open ? '58%' : '24%',
-                    },
-                  ]}
-                />
-              </View>
-              <View style={[styles.marketStatus, { backgroundColor: open ? colors.secondary : colors.muted }]}>
-                <View style={[styles.statusDot, { backgroundColor: open ? colors.primary : colors.mutedForeground }]} />
-                <Text style={[styles.marketStatusText, { color: colors.primary }]}>
-                  {open ? 'otvoreno' : 'zatvoreno'}
-                </Text>
-              </View>
+              {marketRows.map((market) => (
+                <View style={styles.marketNameRow} key={market.code}>
+                  <Text style={[styles.marketCity, { color: colors.primaryForeground }]}>{market.name}</Text>
+                  <Text style={[styles.marketCode, { color: colors.primaryForeground }]}>{market.code}</Text>
+                </View>
+              ))}
             </View>
-          );
-        })}
-      </View>
+            <View style={styles.marketTimelineViewport}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator
+                nestedScrollEnabled
+                contentContainerStyle={{ width: marketTimelineWidth }}
+              >
+                <View style={{ width: marketTimelineWidth }}>
+                  <View style={styles.marketScale}>
+                    {marketTicks.map((tick) => (
+                      <View style={styles.marketTick} key={tick}>
+                        <Text style={[styles.marketTickLabel, { color: colors.primaryForeground }]}>
+                          {formatScaleTime(tick)}
+                        </Text>
+                        <View style={[styles.marketTickLine, { backgroundColor: colors.primaryForeground }]} />
+                      </View>
+                    ))}
+                  </View>
+                  {marketRows.map((market) => {
+                    const window = marketWindowInZagreb(market, now);
+                    const openLeft = window
+                      ? Math.max(0, ((window.open - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH)
+                      : 0;
+                    const closeLeft = window
+                      ? Math.min(marketTimelineWidth, ((window.close - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH)
+                      : 0;
+                    return (
+                      <View style={[styles.marketTrack, { backgroundColor: colors.secondary }]} key={market.code}>
+                        {marketTicks.map((tick) => (
+                          <View
+                            style={[
+                              styles.marketGridTick,
+                              { left: ((tick - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH, backgroundColor: colors.primary },
+                            ]}
+                            key={tick}
+                          />
+                        ))}
+                        {window ? (
+                          <View
+                            style={[
+                              styles.marketOpenWindow,
+                              {
+                                left: openLeft,
+                                width: Math.max(2, closeLeft - openLeft),
+                                backgroundColor: colors.secondary,
+                              },
+                            ]}
+                          />
+                        ) : null}
+                        <View style={[styles.marketNowLine, { left: nowPosition, backgroundColor: colors.accent }]} />
+                      </View>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
+            <View style={styles.marketStatusColumn}>
+              <View style={styles.marketColumnHeader}>
+                <Text style={[styles.marketColumnHeaderText, { color: colors.primaryForeground }]}>STATUS</Text>
+              </View>
+              {marketRows.map((market) => {
+                const localMinutes = minutesInTimeZone(now, market.timeZone);
+                const open =
+                  isWeekdayInTimeZone(now, market.timeZone) &&
+                  localMinutes >= market.openHour * 60 + market.openMinute &&
+                  localMinutes < market.closeHour * 60 + market.closeMinute;
+                const statusColor = open ? colors.positive : colors.destructive;
+                return (
+                  <View style={styles.marketStatusRow} key={market.code}>
+                    <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                    <Text style={[styles.marketStatusText, { color: statusColor }]}>
+                      {open ? 'otvoreno' : 'zatvoreno'}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+          <View style={styles.marketLegend}>
+            <View style={styles.marketLegendItem}>
+              <View style={[styles.legendBar, { backgroundColor: colors.secondary }]} />
+              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>trgovanje</Text>
+            </View>
+            <View style={styles.marketLegendItem}>
+              <View style={[styles.legendBar, { backgroundColor: colors.accent }]} />
+              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>sada</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
