@@ -123,15 +123,19 @@ const marketRows: MarketDefinition[] = [
   { name: 'New York', code: 'NASDAQ', timeZone: 'America/New_York', openHour: 9, openMinute: 30, closeHour: 16, closeMinute: 0 },
 ];
 
-const MARKET_SCALE_START = 6 * 60;
-const MARKET_SCALE_END = 23 * 60;
+const MARKET_SCALE_START = 0;
+const MARKET_SCALE_END = 24 * 60;
 const MARKET_TICK_MINUTES = 15;
 const MARKET_TICK_WIDTH = 24;
 const marketTicks = Array.from(
   { length: (MARKET_SCALE_END - MARKET_SCALE_START) / MARKET_TICK_MINUTES + 1 },
   (_, index) => MARKET_SCALE_START + index * MARKET_TICK_MINUTES,
 );
+const marketIntervals = marketTicks.slice(0, -1);
 const marketTimelineWidth = marketTicks.length * MARKET_TICK_WIDTH;
+const MARKET_EXTENDED_MINUTES = 60;
+
+type MarketPhase = 'closed' | 'open' | 'extended';
 
 function getTimeZonePart(date: Date, timeZone: string, type: Intl.DateTimeFormatPartTypes): string {
   return new Intl.DateTimeFormat('en-GB', {
@@ -206,9 +210,27 @@ function marketWindowInZagreb(
 }
 
 function formatScaleTime(minutes: number): string {
+  if (minutes === MARKET_SCALE_END) return '00:00';
   const hour = Math.floor(minutes / 60).toString().padStart(2, '0');
   const minute = (minutes % 60).toString().padStart(2, '0');
   return `${hour}:${minute}`;
+}
+
+function phaseForMarketSegment(
+  segmentStart: number,
+  window: { open: number; close: number } | null,
+): MarketPhase {
+  if (!window) return 'closed';
+  const premarketStart = Math.max(MARKET_SCALE_START, window.open - MARKET_EXTENDED_MINUTES);
+  const postmarketEnd = Math.min(MARKET_SCALE_END, window.close + MARKET_EXTENDED_MINUTES);
+  if (segmentStart >= window.open && segmentStart < window.close) return 'open';
+  if (
+    (segmentStart >= premarketStart && segmentStart < window.open) ||
+    (segmentStart >= window.close && segmentStart < postmarketEnd)
+  ) {
+    return 'extended';
+  }
+  return 'closed';
 }
 
 function categoryForItem(item: NewsItem): Exclude<Category, 'Sve'> {
@@ -397,27 +419,30 @@ function MarketStatus() {
                       : 0;
                     return (
                       <View style={[styles.marketTrack, { width: marketTimelineWidth, backgroundColor: colors.muted }]} key={market.code}>
-                        {marketTicks.map((tick) => (
-                          <View
-                            style={[
-                              styles.marketGridTick,
-                              { left: ((tick - MARKET_SCALE_START) / MARKET_TICK_MINUTES) * MARKET_TICK_WIDTH, backgroundColor: colors.primary },
-                            ]}
-                            key={tick}
-                          />
-                        ))}
-                        {window ? (
-                          <View
-                            style={[
-                              styles.marketOpenWindow,
-                              {
-                                left: openLeft,
-                                width: Math.max(2, closeLeft - openLeft),
-                                backgroundColor: colors.secondary,
-                              },
-                            ]}
-                          />
-                        ) : null}
+                        <View style={[styles.marketTrackInset, { backgroundColor: colors.card }]}>
+                          {marketIntervals.map((segmentStart, index) => {
+                            const phase = phaseForMarketSegment(segmentStart, window);
+                            const phaseColor =
+                              phase === 'open'
+                                ? colors.secondary
+                                : phase === 'extended'
+                                  ? colors.violet
+                                  : colors.destructive;
+                            return (
+                              <View
+                                style={[
+                                  styles.marketSegment,
+                                  {
+                                    left: index * MARKET_TICK_WIDTH,
+                                    width: MARKET_TICK_WIDTH - 1,
+                                    backgroundColor: phaseColor,
+                                  },
+                                ]}
+                                key={`${market.code}-${segmentStart}`}
+                              />
+                            );
+                          })}
+                        </View>
                         <View style={[styles.marketNowLine, { left: nowPosition, backgroundColor: colors.accent }]} />
                       </View>
                     );
@@ -440,7 +465,7 @@ function MarketStatus() {
                   <View style={styles.marketStatusRow} key={market.code}>
                     <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
                     <Text style={[styles.marketStatusText, { color: statusColor }]}>
-                      {open ? 'otvoreno' : 'zatvoreno'}
+                      {open ? 'OTVORENO' : 'ZATVORENO'}
                     </Text>
                   </View>
                 );
@@ -450,11 +475,19 @@ function MarketStatus() {
           <View style={styles.marketLegend}>
             <View style={styles.marketLegendItem}>
               <View style={[styles.legendBar, { backgroundColor: colors.secondary }]} />
-              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>trgovanje</Text>
+              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>OTVORENO</Text>
+            </View>
+            <View style={styles.marketLegendItem}>
+              <View style={[styles.legendBar, { backgroundColor: colors.violet }]} />
+              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>PRE/POST</Text>
+            </View>
+            <View style={styles.marketLegendItem}>
+              <View style={[styles.legendBar, { backgroundColor: colors.destructive }]} />
+              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>ZATVORENO</Text>
             </View>
             <View style={styles.marketLegendItem}>
               <View style={[styles.legendBar, { backgroundColor: colors.accent }]} />
-              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>sada</Text>
+              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>SADA</Text>
             </View>
           </View>
         </View>
