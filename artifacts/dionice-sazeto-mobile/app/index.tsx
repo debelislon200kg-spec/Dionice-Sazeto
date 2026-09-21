@@ -18,7 +18,7 @@ import type { NewsItem } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 
 type Direction = 'positive' | 'negative' | 'mixed';
-type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Makro' | 'Regija';
+type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Ekonomija' | 'Sektori';
 
 type Story = {
   id: string;
@@ -36,12 +36,12 @@ type Story = {
   accent: 'lime' | 'coral' | 'blue' | 'amber' | 'violet';
 };
 
-const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Makro', 'Regija'];
+const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Ekonomija', 'Sektori'];
 
 const fallbackStories: Story[] = [
   {
     id: 'fed-patience',
-    category: 'Makro',
+    category: 'Ekonomija',
     source: 'Reuters',
     published: 'Danas, 07:42',
     readTime: '4 min',
@@ -242,13 +242,21 @@ function phaseForMarketSegment(
 
 function categoryForItem(item: NewsItem): Exclude<Category, 'Sve'> {
   const searchable = `${item.originalTitle} ${item.translatedTitle} ${item.company}`.toLowerCase();
-  if (/(fed|ecb|kamate|inflacij|interest rate|central bank|monetary)/.test(searchable)) {
-    return 'Makro';
-  }
-  if (/(europe|europa|eurozone|germany|njema|brussels|bruxelles)/.test(searchable)) {
-    return 'Regija';
+  if (
+    /(fed|ecb|kamate|kamatn|inflacij|interest rate|central bank|monetary|središnj|bdp|gdp|employment|zaposlen|recession|recesij|currency|valut|forex|exchange rate|tečaj|yield|prinos)/.test(
+      searchable,
+    )
+  ) {
+    return 'Ekonomija';
   }
   if (item.ticker || item.company) return 'Kompanije';
+  if (
+    /(technology|tehnolog|software|chip|čip|semiconductor|poluvodič|bank|bankar|energy|energ|oil|nafta|gas|plin|health|zdrav|pharma|farmac|auto|automobil|ev|electric vehicle|retail|maloprod|industr|consumer|potroša|telecom|telekom|utilities)/.test(
+      searchable,
+    )
+  ) {
+    return 'Sektori';
+  }
   return 'Tržišta';
 }
 

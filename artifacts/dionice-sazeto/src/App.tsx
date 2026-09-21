@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 type Direction = 'positive' | 'negative' | 'mixed';
-type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Makro' | 'Regija';
+type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Ekonomija' | 'Sektori';
 
 type Story = {
   id: string;
@@ -53,7 +53,7 @@ type Story = {
 const stories: Story[] = [
   {
     id: 'fed-patience',
-    category: 'Makro',
+    category: 'Ekonomija',
     source: 'Reuters',
     sourceShort: 'REUTERS',
     published: 'Danas, 07:42',
@@ -137,7 +137,7 @@ const stories: Story[] = [
   },
   {
     id: 'eu-cars',
-    category: 'Regija',
+    category: 'Sektori',
     source: 'CNBC',
     sourceShort: 'CNBC',
     published: 'Jučer, 11:31',
@@ -178,7 +178,7 @@ const stories: Story[] = [
   },
 ];
 
-const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Makro', 'Regija'];
+const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Ekonomija', 'Sektori'];
 const queryClient = new QueryClient();
 
 function sourceShortName(source: string): string {
@@ -195,14 +195,22 @@ function sourceShortName(source: string): string {
 
 function categoryForItem(item: NewsItem): Exclude<Category, 'Sve'> {
   const searchable = `${item.originalTitle} ${item.translatedTitle} ${item.company}`.toLowerCase();
-  if (/(fed|ecb|kamate|inflacij|interest rate|central bank|monetary)/.test(searchable)) {
-    return 'Makro';
-  }
-  if (/(europe|europa|eurozone|germany|njema|brussels|bruxelles)/.test(searchable)) {
-    return 'Regija';
+  if (
+    /(fed|ecb|kamate|kamatn|inflacij|interest rate|central bank|monetary|središnj|bdp|gdp|employment|zaposlen|recession|recesij|currency|valut|forex|exchange rate|tečaj|yield|prinos)/.test(
+      searchable,
+    )
+  ) {
+    return 'Ekonomija';
   }
   if (item.ticker || item.company) {
     return 'Kompanije';
+  }
+  if (
+    /(technology|tehnolog|software|chip|čip|semiconductor|poluvodič|bank|bankar|energy|energ|oil|nafta|gas|plin|health|zdrav|pharma|farmac|auto|automobil|ev|electric vehicle|retail|maloprod|industr|consumer|potroša|telecom|telekom|utilities)/.test(
+      searchable,
+    )
+  ) {
+    return 'Sektori';
   }
   return 'Tržišta';
 }
