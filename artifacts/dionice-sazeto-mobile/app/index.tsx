@@ -170,26 +170,36 @@ function localTimeAsInstant(
   const localYear = Number(getTimeZonePart(date, timeZone, 'year'));
   const localMonth = Number(getTimeZonePart(date, timeZone, 'month'));
   const localDay = Number(getTimeZonePart(date, timeZone, 'day'));
-  const zagrebYear = Number(getTimeZonePart(date, 'Europe/Zagreb', 'year'));
-  const zagrebMonth = Number(getTimeZonePart(date, 'Europe/Zagreb', 'month'));
-  const zagrebDay = Number(getTimeZonePart(date, 'Europe/Zagreb', 'day'));
-  const localWall = Date.UTC(localYear, localMonth - 1, localDay, hour, minute);
-  const zagrebWall = Date.UTC(
-    zagrebYear,
-    zagrebMonth - 1,
-    zagrebDay,
-    Number(getTimeZonePart(date, 'Europe/Zagreb', 'hour')),
-    Number(getTimeZonePart(date, 'Europe/Zagreb', 'minute')),
+  const targetWall = Date.UTC(localYear, localMonth - 1, localDay, hour, minute);
+  let instant = new Date(targetWall);
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const actualLocalWall = Date.UTC(
+      Number(getTimeZonePart(instant, timeZone, 'year')),
+      Number(getTimeZonePart(instant, timeZone, 'month')) - 1,
+      Number(getTimeZonePart(instant, timeZone, 'day')),
+      Number(getTimeZonePart(instant, timeZone, 'hour')),
+      Number(getTimeZonePart(instant, timeZone, 'minute')),
+    );
+    instant = new Date(instant.getTime() + (targetWall - actualLocalWall));
+  }
+
+  return instant;
+}
+
+function calendarDayNumber(date: Date, timeZone: string): number {
+  return Date.UTC(
+    Number(getTimeZonePart(date, timeZone, 'year')),
+    Number(getTimeZonePart(date, timeZone, 'month')) - 1,
+    Number(getTimeZonePart(date, timeZone, 'day')),
   );
-  const currentLocalWall = Date.UTC(
-    localYear,
-    localMonth - 1,
-    localDay,
-    Number(getTimeZonePart(date, timeZone, 'hour')),
-    Number(getTimeZonePart(date, timeZone, 'minute')),
-  );
-  const zoneDifference = (currentLocalWall - zagrebWall) / 60_000;
-  return new Date(localWall - zoneDifference * 60_000);
+}
+
+function minutesOnZagrebTimeline(date: Date, referenceDate: Date): number {
+  const dayOffset =
+    (calendarDayNumber(date, 'Europe/Zagreb') - calendarDayNumber(referenceDate, 'Europe/Zagreb')) /
+    (24 * 60 * 60 * 1000);
+  return minutesInTimeZone(date, 'Europe/Zagreb') + dayOffset * 24 * 60;
 }
 
 function marketWindowInZagreb(
@@ -198,13 +208,15 @@ function marketWindowInZagreb(
 ): { open: number; close: number } | null {
   if (!isWeekdayInTimeZone(now, market.timeZone)) return null;
   return {
-    open: minutesInTimeZone(
+    open: minutesOnZagrebTimeline(
       localTimeAsInstant(now, market.timeZone, market.openHour, market.openMinute),
       'Europe/Zagreb',
+      now,
     ),
-    close: minutesInTimeZone(
+    close: minutesOnZagrebTimeline(
       localTimeAsInstant(now, market.timeZone, market.closeHour, market.closeMinute),
       'Europe/Zagreb',
+      now,
     ),
   };
 }
