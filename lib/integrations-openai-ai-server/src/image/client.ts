@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import OpenAI, { toFile } from "openai";
+import { OpenAI, toFile } from "openai";
 import { Buffer } from "node:buffer";
 
 if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
