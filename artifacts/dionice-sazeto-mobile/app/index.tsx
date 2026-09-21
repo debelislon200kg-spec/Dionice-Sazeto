@@ -171,20 +171,16 @@ function localTimeAsInstant(
   const localMonth = Number(getTimeZonePart(date, timeZone, 'month'));
   const localDay = Number(getTimeZonePart(date, timeZone, 'day'));
   const targetWall = Date.UTC(localYear, localMonth - 1, localDay, hour, minute);
-  let instant = new Date(targetWall);
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const actualLocalWall = Date.UTC(
-      Number(getTimeZonePart(instant, timeZone, 'year')),
-      Number(getTimeZonePart(instant, timeZone, 'month')) - 1,
-      Number(getTimeZonePart(instant, timeZone, 'day')),
-      Number(getTimeZonePart(instant, timeZone, 'hour')),
-      Number(getTimeZonePart(instant, timeZone, 'minute')),
-    );
-    instant = new Date(instant.getTime() + (targetWall - actualLocalWall));
-  }
-
-  return instant;
+  const probe = new Date(targetWall);
+  const probeLocalWall = Date.UTC(
+    Number(getTimeZonePart(probe, timeZone, 'year')),
+    Number(getTimeZonePart(probe, timeZone, 'month')) - 1,
+    Number(getTimeZonePart(probe, timeZone, 'day')),
+    Number(getTimeZonePart(probe, timeZone, 'hour')),
+    Number(getTimeZonePart(probe, timeZone, 'minute')),
+  );
+  const zoneOffset = probeLocalWall - probe.getTime();
+  return new Date(targetWall - zoneOffset);
 }
 
 function calendarDayNumber(date: Date, timeZone: string): number {
@@ -210,12 +206,10 @@ function marketWindowInZagreb(
   return {
     open: minutesOnZagrebTimeline(
       localTimeAsInstant(now, market.timeZone, market.openHour, market.openMinute),
-      'Europe/Zagreb',
       now,
     ),
     close: minutesOnZagrebTimeline(
       localTimeAsInstant(now, market.timeZone, market.closeHour, market.closeMinute),
-      'Europe/Zagreb',
       now,
     ),
   };
@@ -369,7 +363,7 @@ function MarketStatus() {
   }, [expanded, nowPosition]);
 
   return (
-    <View style={[styles.marketCard, { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+    <View style={[styles.marketCard, { backgroundColor: colors.marketBackground, borderColor: colors.marketBackground }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded }}
@@ -379,11 +373,11 @@ function MarketStatus() {
         style={({ pressed }) => [styles.marketHeader, pressed && styles.pressed]}
       >
         <View style={styles.marketHeaderTitle}>
-          <View style={[styles.eyebrowLine, { backgroundColor: colors.accent }]} />
-          <Text style={[styles.marketHeaderLabel, { color: colors.primaryForeground }]}>MARKET HOURS</Text>
+          <View style={[styles.eyebrowLine, { backgroundColor: colors.marketNow }]} />
+          <Text style={[styles.marketHeaderLabel, { color: colors.marketForeground }]}>MARKET HOURS</Text>
         </View>
         <View style={styles.marketHeaderRight}>
-          <Text style={[styles.marketClock, { color: colors.primaryForeground }]}>
+          <Text style={[styles.marketClock, { color: colors.marketForeground }]}>
             {new Intl.DateTimeFormat('hr-HR', {
               timeZone: 'Europe/Zagreb',
               hour: '2-digit',
@@ -394,24 +388,24 @@ function MarketStatus() {
           <Ionicons
             name={expanded ? 'chevron-up' : 'chevron-down'}
             size={17}
-            color={colors.primaryForeground}
+            color={colors.marketForeground}
           />
         </View>
       </Pressable>
       {expanded ? (
         <View style={styles.marketExpanded}>
-          <Text style={[styles.marketScaleCaption, { color: colors.primaryForeground }]}>
+          <Text style={[styles.marketScaleCaption, { color: colors.marketForeground }]}>
             ZAGREB TIME · PODJELE 15 MIN
           </Text>
           <View style={styles.marketTimelineGrid}>
             <View style={styles.marketFixedColumn}>
               <View style={styles.marketColumnHeader}>
-                <Text style={[styles.marketColumnHeaderText, { color: colors.primaryForeground }]}>BURZA</Text>
+                <Text style={[styles.marketColumnHeaderText, { color: colors.marketForeground }]}>BURZA</Text>
               </View>
               {marketRows.map((market) => (
                 <View style={styles.marketNameRow} key={market.code}>
-                  <Text style={[styles.marketCity, { color: colors.primaryForeground }]}>{market.name}</Text>
-                  <Text style={[styles.marketCode, { color: colors.primaryForeground }]}>{market.code}</Text>
+                  <Text style={[styles.marketCity, { color: colors.marketForeground }]}>{market.name}</Text>
+                  <Text style={[styles.marketCode, { color: colors.marketForeground }]}>{market.code}</Text>
                 </View>
               ))}
             </View>
@@ -427,27 +421,27 @@ function MarketStatus() {
                   <View style={styles.marketScale}>
                     {marketTicks.map((tick) => (
                       <View style={styles.marketTick} key={tick}>
-                        <Text style={[styles.marketTickLabel, { color: colors.primaryForeground }]}>
+                        <Text style={[styles.marketTickLabel, { color: colors.marketForeground }]}>
                           {formatScaleTime(tick)}
                         </Text>
-                        <View style={[styles.marketTickLine, { backgroundColor: colors.primaryForeground }]} />
+                        <View style={[styles.marketTickLine, { backgroundColor: colors.marketForeground }]} />
                       </View>
                     ))}
-                    <View style={[styles.marketScaleNowLine, { left: nowPosition, backgroundColor: colors.accent }]} />
+                    <View style={[styles.marketScaleNowLine, { left: nowPosition, backgroundColor: colors.marketNow }]} />
                   </View>
                   {marketRows.map((market) => {
                     const window = marketWindowInZagreb(market, now);
                     return (
-                      <View style={[styles.marketTrack, { width: marketTimelineWidth, backgroundColor: colors.primary }]} key={market.code}>
-                        <View style={[styles.marketTrackInset, { backgroundColor: colors.card }]}>
+                      <View style={[styles.marketTrack, { width: marketTimelineWidth, backgroundColor: colors.marketTrack }]} key={market.code}>
+                        <View style={[styles.marketTrackInset, { backgroundColor: colors.marketCell }]}>
                           {marketIntervals.map((segmentStart, index) => {
                             const phase = phaseForMarketSegment(segmentStart, window);
                             const phaseColor =
                               phase === 'open'
-                                ? colors.secondary
+                                ? colors.marketOpen
                                 : phase === 'extended'
-                                  ? colors.violet
-                                  : colors.destructive;
+                                  ? colors.marketExtended
+                                  : colors.marketClosed;
                             return (
                               <View
                                 style={[
@@ -463,7 +457,7 @@ function MarketStatus() {
                             );
                           })}
                         </View>
-                        <View style={[styles.marketNowLine, { left: nowPosition, backgroundColor: colors.accent }]} />
+                        <View style={[styles.marketNowLine, { left: nowPosition, backgroundColor: colors.marketNow }]} />
                       </View>
                     );
                   })}
@@ -472,7 +466,7 @@ function MarketStatus() {
             </View>
             <View style={styles.marketStatusColumn}>
               <View style={styles.marketColumnHeader}>
-                <Text style={[styles.marketColumnHeaderText, { color: colors.primaryForeground }]}>STATUS</Text>
+                <Text style={[styles.marketColumnHeaderText, { color: colors.marketForeground }]}>STATUS</Text>
               </View>
               {marketRows.map((market) => {
                 const localMinutes = minutesInTimeZone(now, market.timeZone);
@@ -480,7 +474,7 @@ function MarketStatus() {
                   isWeekdayInTimeZone(now, market.timeZone) &&
                   localMinutes >= market.openHour * 60 + market.openMinute &&
                   localMinutes < market.closeHour * 60 + market.closeMinute;
-                const statusColor = open ? colors.positive : colors.destructive;
+                const statusColor = open ? colors.marketOpen : colors.marketClosed;
                 return (
                   <View style={styles.marketStatusRow} key={market.code}>
                     <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
@@ -494,20 +488,20 @@ function MarketStatus() {
           </View>
           <View style={styles.marketLegend}>
             <View style={styles.marketLegendItem}>
-              <View style={[styles.legendBar, { backgroundColor: colors.secondary }]} />
-              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>OTVORENO</Text>
+              <View style={[styles.legendBar, { backgroundColor: colors.marketOpen }]} />
+              <Text style={[styles.marketLegendText, { color: colors.marketForeground }]}>OTVORENO</Text>
             </View>
             <View style={styles.marketLegendItem}>
-              <View style={[styles.legendBar, { backgroundColor: colors.violet }]} />
-              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>PRE/POST</Text>
+              <View style={[styles.legendBar, { backgroundColor: colors.marketExtended }]} />
+              <Text style={[styles.marketLegendText, { color: colors.marketForeground }]}>PRE/POST</Text>
             </View>
             <View style={styles.marketLegendItem}>
-              <View style={[styles.legendBar, { backgroundColor: colors.destructive }]} />
-              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>ZATVORENO</Text>
+              <View style={[styles.legendBar, { backgroundColor: colors.marketClosed }]} />
+              <Text style={[styles.marketLegendText, { color: colors.marketForeground }]}>ZATVORENO</Text>
             </View>
             <View style={styles.marketLegendItem}>
-              <View style={[styles.legendBar, { backgroundColor: colors.accent }]} />
-              <Text style={[styles.marketLegendText, { color: colors.primaryForeground }]}>SADA</Text>
+              <View style={[styles.legendBar, { backgroundColor: colors.marketNow }]} />
+              <Text style={[styles.marketLegendText, { color: colors.marketForeground }]}>SADA</Text>
             </View>
           </View>
         </View>
