@@ -9,35 +9,21 @@ import {
   Text,
   View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRefreshNews } from '@workspace/api-client-react';
 import type { NewsItem } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
+import { useSavedStories, type SavedStory } from '@/contexts/SavedStoriesContext';
 
 type Direction = 'positive' | 'negative' | 'mixed';
 type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Ekonomija' | 'Sektori';
 
-type Story = {
-  id: string;
-  category: Exclude<Category, 'Sve'>;
-  source: string;
-  published: string;
-  readTime: string;
-  company: string;
-  ticker?: string;
-  title: string;
-  summary: string;
-  direction: Direction;
-  pressure: string;
-  articleUrl: string;
-  accent: 'lime' | 'coral' | 'blue' | 'amber' | 'violet';
-};
+type Story = SavedStory;
 
 const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Ekonomija', 'Sektori'];
-const SAVED_STORIES_STORAGE_KEY = '@dionice-sazeto/saved-stories';
 
 const fallbackStories: Story[] = [
   {
@@ -290,26 +276,6 @@ function mapNewsItem(item: NewsItem, index: number): Story {
     articleUrl: item.articleUrl,
     accent: accents[index % accents.length],
   };
-}
-
-function isStoredStory(value: unknown): value is Story {
-  if (typeof value !== 'object' || value === null) return false;
-  const story = value as Partial<Story>;
-  return (
-    typeof story.id === 'string' &&
-    typeof story.category === 'string' &&
-    typeof story.source === 'string' &&
-    typeof story.published === 'string' &&
-    typeof story.readTime === 'string' &&
-    typeof story.company === 'string' &&
-    typeof story.title === 'string' &&
-    typeof story.summary === 'string' &&
-    typeof story.direction === 'string' &&
-    typeof story.pressure === 'string' &&
-    typeof story.articleUrl === 'string' &&
-    typeof story.accent === 'string' &&
-    (story.ticker === undefined || typeof story.ticker === 'string')
-  );
 }
 
 function DirectionIcon({
@@ -683,57 +649,19 @@ function EmptyState() {
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [stories, setStories] = useState<Story[]>(fallbackStories);
   const [activeCategory, setActiveCategory] = useState<Category>('Sve');
-  const [savedStories, setSavedStories] = useState<Story[]>([]);
-  const savedStoriesRef = useRef<Story[]>([]);
-  const savedStoriesHydratedRef = useRef(false);
-  const [savedStoriesReady, setSavedStoriesReady] = useState(false);
-  const savedWriteQueueRef = useRef(Promise.resolve());
-  const [savedStorageError, setSavedStorageError] = useState(false);
+  const {
+    savedStories,
+    isReady: savedStoriesReady,
+    storageError: savedStorageError,
+    isSaved,
+    toggleSaved: toggleSavedStory,
+  } = useSavedStories();
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const refreshMutation = useRefreshNews();
-
-  useEffect(() => {
-    let cancelled = false;
-    AsyncStorage.getItem(SAVED_STORIES_STORAGE_KEY)
-      .then((storedValue) => {
-        if (cancelled) return;
-        try {
-          const parsed: unknown = storedValue ? JSON.parse(storedValue) : [];
-          const hydratedStories = Array.isArray(parsed) ? parsed.filter(isStoredStory) : [];
-          savedStoriesRef.current = hydratedStories;
-          setSavedStories(hydratedStories);
-          setSavedStorageError(false);
-        } catch {
-          savedStoriesRef.current = [];
-          setSavedStories([]);
-          setSavedStorageError(true);
-        } finally {
-          savedStoriesHydratedRef.current = true;
-          setSavedStoriesReady(true);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setSavedStorageError(true);
-        savedStoriesHydratedRef.current = true;
-        setSavedStoriesReady(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const persistSavedStories = useCallback((nextStories: Story[]) => {
-    savedWriteQueueRef.current = savedWriteQueueRef.current
-      .catch(() => undefined)
-      .then(() => AsyncStorage.setItem(SAVED_STORIES_STORAGE_KEY, JSON.stringify(nextStories)))
-      .then(() => setSavedStorageError(false))
-      .catch(() => setSavedStorageError(true));
-  }, []);
 
   const visibleStories = useMemo(
     () => stories.filter((story) => activeCategory === 'Sve' || story.category === activeCategory),
@@ -760,16 +688,10 @@ export default function HomeScreen() {
   }, []);
 
   const toggleSaved = useCallback((story: Story) => {
-    if (!savedStoriesHydratedRef.current) return;
+    if (!savedStoriesReady) return;
     Haptics.selectionAsync();
-    const current = savedStoriesRef.current;
-    const nextStories = current.some((item) => item.id === story.id)
-      ? current.filter((item) => item.id !== story.id)
-      : [...current, story];
-    savedStoriesRef.current = nextStories;
-    setSavedStories(nextStories);
-    persistSavedStories(nextStories);
-  }, [persistSavedStories]);
+    toggleSavedStory(story);
+  }, [savedStoriesReady, toggleSavedStory]);
 
   const featured = visibleStories[0];
   const listStories = featured ? visibleStories.slice(1) : [];
@@ -788,7 +710,23 @@ export default function HomeScreen() {
             <MarketStatus />
             <View style={styles.sectionHeading}>
               <Text style={[styles.sectionTitle, { color: colors.primary }]}>Pregled dana</Text>
-              <Text style={[styles.savedCount, { color: colors.mutedForeground }]}>{savedStories.length} spremljeno</Text>
+              <Pressable
+                accessibilityLabel={`Otvori spremljene vijesti, ${savedStories.length} spremljeno`}
+                accessibilityRole="button"
+                disabled={!savedStoriesReady}
+                onPress={() => router.push('/saved')}
+                testID="button-open-saved-stories"
+                style={({ pressed }) => [
+                  styles.savedCollectionButton,
+                  pressed && styles.pressed,
+                  !savedStoriesReady && styles.disabled,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <Ionicons name="bookmark" size={18} color={colors.accent} />
+                <Text style={[styles.savedCollectionText, { color: colors.foreground }]}>{savedStories.length}</Text>
+                <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+              </Pressable>
             </View>
             {refreshError ? (
               <View style={[styles.feedback, { backgroundColor: colors.errorSurface, borderColor: colors.accent }]}>
@@ -835,7 +773,7 @@ export default function HomeScreen() {
             {featured ? (
               <FeaturedStory
                 story={featured}
-                saved={savedStories.some((item) => item.id === featured.id)}
+                saved={isSaved(featured.id)}
                 onSave={() => toggleSaved(featured)}
                 onOpen={() => openArticle(featured.articleUrl)}
                 disabled={!savedStoriesReady}
@@ -852,7 +790,7 @@ export default function HomeScreen() {
           <View style={styles.listItem}>
             <StoryCard
               story={item}
-              saved={savedStories.some((savedStory) => savedStory.id === item.id)}
+              saved={isSaved(item.id)}
               onSave={() => toggleSaved(item)}
               onOpen={() => openArticle(item.articleUrl)}
               disabled={!savedStoriesReady}
