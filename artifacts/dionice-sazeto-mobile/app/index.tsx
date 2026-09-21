@@ -824,7 +824,7 @@ const styles = StyleSheet.create({
   marketTimelineViewport: { flex: 1, minWidth: 0, overflow: 'hidden' },
   marketScale: { height: 32, position: 'relative' },
   marketTick: { width: 0, height: 32, position: 'absolute', top: 0 },
-  marketTickLabel: { position: 'absolute', top: 1, left: -25, width: 50, textAlign: 'center', fontFamily: 'SpaceMono_400Regular', fontSize: 8 },
+  marketTickLabel: { position: 'absolute', top: 1, left: -25, width: 50, textAlign: 'center', fontFamily: 'SpaceMono_400Regular', fontSize: 9.6 },
   marketTickLabelEnd: { left: -50, textAlign: 'right' },
   marketTickLine: { position: 'absolute', left: 0, bottom: 0, width: 1, height: 8, opacity: 0.55 },
   marketScaleNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, zIndex: 3 },
