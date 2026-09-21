@@ -166,10 +166,11 @@ function localTimeAsInstant(
   timeZone: string,
   hour: number,
   minute: number,
+  calendarTimeZone = timeZone,
 ): Date {
-  const localYear = Number(getTimeZonePart(date, timeZone, 'year'));
-  const localMonth = Number(getTimeZonePart(date, timeZone, 'month'));
-  const localDay = Number(getTimeZonePart(date, timeZone, 'day'));
+  const localYear = Number(getTimeZonePart(date, calendarTimeZone, 'year'));
+  const localMonth = Number(getTimeZonePart(date, calendarTimeZone, 'month'));
+  const localDay = Number(getTimeZonePart(date, calendarTimeZone, 'day'));
   const targetWall = Date.UTC(localYear, localMonth - 1, localDay, hour, minute);
   const probe = new Date(targetWall);
   const probeLocalWall = Date.UTC(
@@ -205,11 +206,11 @@ function marketWindowInZagreb(
   if (!isWeekdayInTimeZone(now, market.timeZone)) return null;
   return {
     open: minutesOnZagrebTimeline(
-      localTimeAsInstant(now, market.timeZone, market.openHour, market.openMinute),
+      localTimeAsInstant(now, market.timeZone, market.openHour, market.openMinute, 'Europe/Zagreb'),
       now,
     ),
     close: minutesOnZagrebTimeline(
-      localTimeAsInstant(now, market.timeZone, market.closeHour, market.closeMinute),
+      localTimeAsInstant(now, market.timeZone, market.closeHour, market.closeMinute, 'Europe/Zagreb'),
       now,
     ),
   };
