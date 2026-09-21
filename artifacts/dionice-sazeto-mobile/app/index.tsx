@@ -373,7 +373,7 @@ function MarketStatus() {
         style={({ pressed }) => [styles.marketHeader, pressed && styles.pressed]}
       >
         <View style={styles.marketHeaderTitle}>
-          <View style={[styles.eyebrowLine, { backgroundColor: colors.marketNow }]} />
+          <Ionicons name="hourglass-outline" size={14} color={colors.marketNow} />
           <Text style={[styles.marketHeaderLabel, { color: colors.marketForeground }]}>MARKET HOURS</Text>
         </View>
         <View style={styles.marketHeaderRight}>
