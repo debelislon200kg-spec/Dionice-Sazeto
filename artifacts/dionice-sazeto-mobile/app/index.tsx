@@ -125,14 +125,14 @@ const marketRows: MarketDefinition[] = [
 
 const MARKET_SCALE_START = 0;
 const MARKET_SCALE_END = 24 * 60;
-const MARKET_TICK_MINUTES = 15;
+const MARKET_TICK_MINUTES = 30;
 const MARKET_TICK_WIDTH = 24;
 const marketTicks = Array.from(
   { length: (MARKET_SCALE_END - MARKET_SCALE_START) / MARKET_TICK_MINUTES + 1 },
   (_, index) => MARKET_SCALE_START + index * MARKET_TICK_MINUTES,
 );
 const marketIntervals = marketTicks.slice(0, -1);
-const marketTimelineWidth = marketTicks.length * MARKET_TICK_WIDTH;
+const marketTimelineWidth = marketIntervals.length * MARKET_TICK_WIDTH;
 const MARKET_EXTENDED_MINUTES = 60;
 
 type MarketPhase = 'closed' | 'open' | 'extended';
@@ -418,9 +418,9 @@ function MarketStatus() {
                 contentContainerStyle={{ width: marketTimelineWidth }}
               >
                 <View style={{ width: marketTimelineWidth }}>
-                  <View style={styles.marketScale}>
-                    {marketTicks.map((tick) => (
-                      <View style={styles.marketTick} key={tick}>
+                  <View style={[styles.marketScale, { width: marketTimelineWidth }]}>
+                    {marketTicks.map((tick, index) => (
+                      <View style={[styles.marketTick, { left: index * MARKET_TICK_WIDTH }]} key={tick}>
                         <Text style={[styles.marketTickLabel, { color: colors.marketForeground }]}>
                           {formatScaleTime(tick)}
                         </Text>
@@ -448,7 +448,7 @@ function MarketStatus() {
                                   styles.marketSegment,
                                   {
                                     left: index * MARKET_TICK_WIDTH,
-                                    width: MARKET_TICK_WIDTH - 1,
+                                    width: MARKET_TICK_WIDTH,
                                     backgroundColor: phaseColor,
                                   },
                                 ]}
@@ -456,6 +456,15 @@ function MarketStatus() {
                               />
                             );
                           })}
+                          {marketTicks.slice(0, -1).map((tick, index) => (
+                            <View
+                              style={[
+                                styles.marketGridTick,
+                                { left: index * MARKET_TICK_WIDTH, backgroundColor: colors.marketCell },
+                              ]}
+                              key={`${market.code}-grid-${tick}`}
+                            />
+                          ))}
                         </View>
                         <View style={[styles.marketNowLine, { left: nowPosition, backgroundColor: colors.marketNow }]} />
                       </View>
