@@ -1,4 +1,8 @@
-import { Router, type Request, type Response } from "express";
+import {
+  Router,
+  type Request as ExpressRequest,
+  type Response as ExpressResponse,
+} from "express";
 import {
   ListNewsSourcesResponse,
   RefreshNewsResponse,
@@ -7,7 +11,9 @@ import { NEWS_SOURCES, refreshNews } from "../lib/news";
 
 const router = Router();
 
-router.get("/news/sources", (_req: Request, res: Response): void => {
+router.get(
+  "/news/sources",
+  (_req: ExpressRequest, res: ExpressResponse): void => {
   res.json(
     ListNewsSourcesResponse.parse(
       NEWS_SOURCES.map(({ id, name, url, status }) => ({
@@ -18,11 +24,15 @@ router.get("/news/sources", (_req: Request, res: Response): void => {
       })),
     ),
   );
-});
+  },
+);
 
 router.post(
   "/news/refresh",
-  async (req: Request, res: Response): Promise<void> => {
+  async (
+    req: ExpressRequest,
+    res: ExpressResponse,
+  ): Promise<void> => {
     try {
       const result = await refreshNews();
       if (result.items.length === 0) {

@@ -92,6 +92,12 @@ const REQUEST_HEADERS = {
     "DioniceSazeto/1.0 (+https://replit.com; news reader for personal use)",
 };
 
+type NewsFetchResponse = {
+  ok: boolean;
+  status: number;
+  text: () => Promise<string>;
+};
+
 function decodeHtmlEntities(value: string): string {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1")
@@ -244,10 +250,10 @@ function parseFinvizHtml(html: string, source: NewsSource): RawNewsItem[] {
 async function fetchSource(
   source: NewsSource,
 ): Promise<{ items: RawNewsItem[]; warning?: string }> {
-  const response = await fetch(source.feedUrl, {
+  const response = (await fetch(source.feedUrl, {
     headers: REQUEST_HEADERS,
     signal: AbortSignal.timeout(12000),
-  });
+  })) as unknown as NewsFetchResponse;
 
   if (!response.ok) {
     return {
