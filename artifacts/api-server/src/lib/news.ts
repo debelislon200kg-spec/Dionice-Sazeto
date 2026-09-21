@@ -1,4 +1,4 @@
-import { openai } from "./openai.js";
+import { getOpenAI } from "./openai.js";
 import { createHash } from "node:crypto";
 
 export type NewsSourceStatus = "configured" | "partial" | "unavailable";
@@ -348,7 +348,7 @@ function parseAnalysisResponse(content: string): unknown[] {
 }
 
 async function analyzeWithOpenAI(items: RawNewsItem[]): Promise<NewsItem[]> {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-5.6-terra",
     max_completion_tokens: 8192,
     messages: [

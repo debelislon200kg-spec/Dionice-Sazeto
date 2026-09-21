@@ -1,3 +1,4 @@
 - [News source availability](news-source-access.md) — public RSS access varies by publisher; preserve honest per-source warnings instead of inventing fallback articles.
 - [Vercel Express TypeScript emit](vercel-express-typescript-emit.md) — isolated Vercel compilation can report only “Emit skipped” for valid monorepo Express code.
 - [Vercel Node ESM imports](vercel-node-esm-imports.md) — Vercel’s transpiled Node runtime requires explicit `.js` extensions for relative ESM imports and rejects directory imports.
+- [Vercel workspace package runtime](vercel-workspace-package-runtime.md) — source-only workspace package exports can survive build but fail in Vercel’s Node runtime; keep deployed API dependencies self-contained or compiled.
