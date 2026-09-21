@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -36,6 +37,7 @@ type Story = {
 };
 
 const categories: Category[] = ['Sve', 'Tržišta', 'Kompanije', 'Ekonomija', 'Sektori'];
+const SAVED_STORIES_STORAGE_KEY = '@dionice-sazeto/saved-stories';
 
 const fallbackStories: Story[] = [
   {
@@ -288,6 +290,26 @@ function mapNewsItem(item: NewsItem, index: number): Story {
     articleUrl: item.articleUrl,
     accent: accents[index % accents.length],
   };
+}
+
+function isStoredStory(value: unknown): value is Story {
+  if (typeof value !== 'object' || value === null) return false;
+  const story = value as Partial<Story>;
+  return (
+    typeof story.id === 'string' &&
+    typeof story.category === 'string' &&
+    typeof story.source === 'string' &&
+    typeof story.published === 'string' &&
+    typeof story.readTime === 'string' &&
+    typeof story.company === 'string' &&
+    typeof story.title === 'string' &&
+    typeof story.summary === 'string' &&
+    typeof story.direction === 'string' &&
+    typeof story.pressure === 'string' &&
+    typeof story.articleUrl === 'string' &&
+    typeof story.accent === 'string' &&
+    (story.ticker === undefined || typeof story.ticker === 'string')
+  );
 }
 
 function DirectionIcon({
@@ -545,11 +567,13 @@ function FeaturedStory({
   saved,
   onSave,
   onOpen,
+  disabled,
 }: {
   story: Story;
   saved: boolean;
   onSave: () => void;
   onOpen: () => void;
+  disabled?: boolean;
 }) {
   const colors = useColors();
   return (
@@ -564,9 +588,10 @@ function FeaturedStory({
             event.stopPropagation();
             onSave();
           }}
+          disabled={disabled}
           accessibilityLabel={saved ? 'Ukloni iz spremljenih' : 'Spremi članak'}
           testID={`button-bookmark-${story.id}`}
-          style={({ pressed }) => [styles.bookmarkButton, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.bookmarkButton, disabled && styles.disabled, pressed && styles.pressed]}
         >
           <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={colors.marketForeground} />
         </Pressable>
@@ -590,11 +615,13 @@ function StoryCard({
   saved,
   onSave,
   onOpen,
+  disabled,
 }: {
   story: Story;
   saved: boolean;
   onSave: () => void;
   onOpen: () => void;
+  disabled?: boolean;
 }) {
   const colors = useColors();
   const accent =
@@ -619,9 +646,10 @@ function StoryCard({
               event.stopPropagation();
               onSave();
             }}
+            disabled={disabled}
             accessibilityLabel={saved ? 'Ukloni iz spremljenih' : 'Spremi članak'}
             testID={`button-bookmark-${story.id}`}
-            style={({ pressed }) => [styles.storyBookmark, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.storyBookmark, disabled && styles.disabled, pressed && styles.pressed]}
           >
             <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={18} color={saved ? colors.accent : colors.mutedForeground} />
           </Pressable>
@@ -657,10 +685,49 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [stories, setStories] = useState<Story[]>(fallbackStories);
   const [activeCategory, setActiveCategory] = useState<Category>('Sve');
-  const [savedStories, setSavedStories] = useState<string[]>([]);
+  const [savedStories, setSavedStories] = useState<Story[]>([]);
+  const savedStoriesRef = useRef<Story[]>([]);
+  const savedStoriesHydratedRef = useRef(false);
+  const [savedStoriesReady, setSavedStoriesReady] = useState(false);
+  const savedWriteQueueRef = useRef(Promise.resolve());
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const refreshMutation = useRefreshNews();
+
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(SAVED_STORIES_STORAGE_KEY)
+      .then((storedValue) => {
+        if (cancelled) return;
+        try {
+          const parsed: unknown = storedValue ? JSON.parse(storedValue) : [];
+          const hydratedStories = Array.isArray(parsed) ? parsed.filter(isStoredStory) : [];
+          savedStoriesRef.current = hydratedStories;
+          setSavedStories(hydratedStories);
+        } catch {
+          savedStoriesRef.current = [];
+          setSavedStories([]);
+        } finally {
+          savedStoriesHydratedRef.current = true;
+          setSavedStoriesReady(true);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        savedStoriesHydratedRef.current = true;
+        setSavedStoriesReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const persistSavedStories = useCallback((nextStories: Story[]) => {
+    savedWriteQueueRef.current = savedWriteQueueRef.current
+      .catch(() => undefined)
+      .then(() => AsyncStorage.setItem(SAVED_STORIES_STORAGE_KEY, JSON.stringify(nextStories)));
+  }, []);
 
   const visibleStories = useMemo(
     () => stories.filter((story) => activeCategory === 'Sve' || story.category === activeCategory),
@@ -686,10 +753,17 @@ export default function HomeScreen() {
     void Linking.openURL(url);
   }, []);
 
-  const toggleSaved = useCallback((id: string) => {
+  const toggleSaved = useCallback((story: Story) => {
+    if (!savedStoriesHydratedRef.current) return;
     Haptics.selectionAsync();
-    setSavedStories((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-  }, []);
+    const current = savedStoriesRef.current;
+    const nextStories = current.some((item) => item.id === story.id)
+      ? current.filter((item) => item.id !== story.id)
+      : [...current, story];
+    savedStoriesRef.current = nextStories;
+    setSavedStories(nextStories);
+    persistSavedStories(nextStories);
+  }, [persistSavedStories]);
 
   const featured = visibleStories[0];
   const listStories = featured ? visibleStories.slice(1) : [];
@@ -747,9 +821,10 @@ export default function HomeScreen() {
             {featured ? (
               <FeaturedStory
                 story={featured}
-                saved={savedStories.includes(featured.id)}
-                onSave={() => toggleSaved(featured.id)}
+                saved={savedStories.some((item) => item.id === featured.id)}
+                onSave={() => toggleSaved(featured)}
                 onOpen={() => openArticle(featured.articleUrl)}
+                disabled={!savedStoriesReady}
               />
             ) : null}
             <View style={styles.listHeading}>
@@ -763,9 +838,10 @@ export default function HomeScreen() {
           <View style={styles.listItem}>
             <StoryCard
               story={item}
-              saved={savedStories.includes(item.id)}
-              onSave={() => toggleSaved(item.id)}
+              saved={savedStories.some((savedStory) => savedStory.id === item.id)}
+              onSave={() => toggleSaved(item)}
               onOpen={() => openArticle(item.articleUrl)}
+              disabled={!savedStoriesReady}
             />
           </View>
         )}
