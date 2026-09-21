@@ -7,7 +7,7 @@ import {
   ListNewsSourcesResponse,
   RefreshNewsResponse,
 } from "@workspace/api-zod";
-import { NEWS_SOURCES, refreshNews } from "../lib/news";
+import { NEWS_SOURCES, refreshNews } from "../lib/news.js";
 
 const router = Router();
 

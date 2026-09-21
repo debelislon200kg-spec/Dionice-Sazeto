@@ -1,5 +1,5 @@
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
 
 if (process.env.VERCEL !== "1") {
   const rawPort = process.env["PORT"];
