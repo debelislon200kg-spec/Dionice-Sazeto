@@ -436,6 +436,7 @@ function MarketStatus() {
                           style={[
                             styles.marketTickLine,
                             tick % 60 === 0 && styles.marketTickLineFullHour,
+                            tick % 60 !== 0 && styles.marketTickLineNoLabel,
                             { backgroundColor: colors.marketForeground },
                           ]}
                         />
@@ -834,6 +835,7 @@ const styles = StyleSheet.create({
   marketTickLabelEnd: { left: -50, textAlign: 'right' },
   marketTickLine: { position: 'absolute', left: 0, bottom: 0, width: 1, height: 8, opacity: 0.55 },
   marketTickLineFullHour: { height: 11.2 },
+  marketTickLineNoLabel: { height: 6.4 },
   marketScaleNowLine: { position: 'absolute', top: 0, bottom: 0, width: 2, zIndex: 3 },
   marketTrack: { height: 35, position: 'relative', justifyContent: 'center', overflow: 'hidden' },
   marketTrackInset: { position: 'absolute', left: 0, right: 0, top: 8, bottom: 8 },
