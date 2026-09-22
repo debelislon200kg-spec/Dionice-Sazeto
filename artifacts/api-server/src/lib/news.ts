@@ -99,7 +99,7 @@ export const NEWS_SOURCES: NewsSource[] = [
     id: "stockanalysis",
     name: "Stock Analysis",
     url: "https://stockanalysis.com/",
-    feedUrl: "https://stockanalysis.com/feed/",
+    feedUrl: "https://stockanalysis.com/news/press-releases/",
     status: "configured",
   },
   {
@@ -272,6 +272,66 @@ function parseFinvizHtml(html: string, source: NewsSource): RawNewsItem[] {
   }).slice(0, 4);
 }
 
+function decodeSerializedString(value: string): string {
+  try {
+    return JSON.parse(`"${value}"`) as string;
+  } catch {
+    return value
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\")
+      .trim();
+  }
+}
+
+function parseStockAnalysisHtml(
+  html: string,
+  source: NewsSource,
+): RawNewsItem[] {
+  const articlePattern =
+    /\{url:"((?:\\.|[^"\\])*)",img:(?:null|"(?:\\.|[^"\\])*"),title:"((?:\\.|[^"\\])*)",text:"((?:\\.|[^"\\])*)",source:"((?:\\.|[^"\\])*)",type:"Article"(?:,tickers:\[([^\]]*)\])?,time:"((?:\\.|[^"\\])*)",ago:"((?:\\.|[^"\\])*)"\}/g;
+  const seenUrls = new Set<string>();
+  const results: RawNewsItem[] = [];
+
+  for (const match of html.matchAll(articlePattern)) {
+    const articleUrl = decodeSerializedString(match[1] ?? "");
+    const originalTitle = decodeSerializedString(match[2] ?? "");
+    const description = decodeSerializedString(match[3] ?? "");
+    const originalSource = decodeSerializedString(match[4] ?? "");
+    const publishedAt = decodeSerializedString(match[6] ?? "");
+
+    if (
+      !articleUrl.startsWith("http") ||
+      !originalTitle ||
+      seenUrls.has(articleUrl)
+    ) {
+      continue;
+    }
+
+    seenUrls.add(articleUrl);
+    results.push({
+      id: `${source.id}-${createHash("sha1")
+        .update(`${source.id}:${articleUrl}`)
+        .digest("hex")
+        .slice(0, 16)}`,
+      sourceId: source.id,
+      source: source.name,
+      sourceUrl: source.url,
+      articleUrl,
+      originalTitle,
+      description: originalSource
+        ? `${description} Izvor priopćenja: ${originalSource}.`
+        : description,
+      publishedAt: publishedAt || null,
+    });
+
+    if (results.length === 4) {
+      break;
+    }
+  }
+
+  return results;
+}
+
 async function fetchSource(
   source: NewsSource,
 ): Promise<{ items: RawNewsItem[]; warning?: string }> {
@@ -291,6 +351,8 @@ async function fetchSource(
   const items =
     source.id === "finviz"
       ? parseFinvizHtml(body, source)
+      : source.id === "stockanalysis"
+        ? parseStockAnalysisHtml(body, source)
       : parseFeed(body, source);
   if (items.length === 0) {
     return {
