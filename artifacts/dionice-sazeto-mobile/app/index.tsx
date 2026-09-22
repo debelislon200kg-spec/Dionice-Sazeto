@@ -309,6 +309,15 @@ function DirectionIcon({
   return <Text style={[styles.directionDash, { color }]}>—</Text>;
 }
 
+function MarketHoursIcon({ color }: { color: string }) {
+  return (
+    <View style={styles.marketHoursIcon}>
+      <Ionicons name="notifications-outline" size={15} color={color} />
+      <Ionicons name="time-outline" size={8} color={color} style={styles.marketHoursClock} />
+    </View>
+  );
+}
+
 function RefreshHourglass({ isRefreshing, color }: { isRefreshing: boolean; color: string }) {
   const rotation = useRef(new Animated.Value(0)).current;
 
@@ -441,7 +450,7 @@ function MarketStatus() {
         style={({ pressed }) => [styles.marketHeader, pressed && styles.pressed]}
       >
         <View style={styles.marketHeaderTitle}>
-          <Ionicons name="hourglass-outline" size={14} color={colors.marketNow} />
+          <MarketHoursIcon color={colors.marketForeground} />
           <Text style={[styles.marketHeaderLabel, { color: colors.marketForeground }]}>MARKET HOURS</Text>
         </View>
         <View style={styles.marketHeaderRight}>
@@ -902,6 +911,8 @@ const styles = StyleSheet.create({
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
   marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
   marketHeaderTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  marketHoursIcon: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  marketHoursClock: { position: 'absolute', right: -1, bottom: -1 },
   marketHeaderLabel: { fontFamily: 'SpaceMono_700Bold', fontSize: 10.8, letterSpacing: 1.25 },
   marketHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   marketClock: { fontFamily: 'SpaceMono_400Regular', fontSize: 10 },
