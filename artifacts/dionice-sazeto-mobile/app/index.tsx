@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   FlatList,
   Linking,
   Pressable,
@@ -295,6 +297,57 @@ function DirectionIcon({
   return <Text style={[styles.directionDash, { color }]}>—</Text>;
 }
 
+function RefreshHourglass({ isRefreshing, color }: { isRefreshing: boolean; color: string }) {
+  const rotation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!isRefreshing) {
+      rotation.stopAnimation();
+      rotation.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotation, {
+          toValue: 180,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotation, {
+          toValue: 0,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    animation.start();
+    return () => {
+      animation.stop();
+      rotation.stopAnimation();
+      rotation.setValue(0);
+    };
+  }, [isRefreshing, rotation]);
+
+  const rotate = rotation.interpolate({
+    inputRange: [0, 180],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  return (
+    <Animated.View
+      accessibilityLabel={isRefreshing ? 'Osvježavanje u tijeku' : 'Osvježavanje je završeno'}
+      testID="refresh-hourglass"
+      style={{ transform: [{ rotate }] }}
+    >
+      <Ionicons name="hourglass-outline" size={20} color={color} />
+    </Animated.View>
+  );
+}
+
 function Header({
   isRefreshing,
   onRefresh,
@@ -315,19 +368,22 @@ function Header({
           <Text style={[styles.brandSubtitle, { color: colors.accent }]}>sažeto</Text>
         </View>
       </View>
-      <Pressable
-        accessibilityLabel="Osvježi pregled"
-        onPress={onRefresh}
-        disabled={isRefreshing}
-        testID="button-refresh-header"
-        style={({ pressed }) => [styles.headerButton, pressed && styles.pressed, { borderColor: colors.primary }]}
-      >
-        {isRefreshing ? (
-          <ActivityIndicator size="small" color={colors.primary} />
-        ) : (
-          <Feather name="refresh-cw" size={17} color={colors.primary} />
-        )}
-      </Pressable>
+      <View style={styles.headerActions}>
+        <RefreshHourglass isRefreshing={isRefreshing} color={colors.hourglass} />
+        <Pressable
+          accessibilityLabel="Osvježi pregled"
+          onPress={onRefresh}
+          disabled={isRefreshing}
+          testID="button-refresh-header"
+          style={({ pressed }) => [styles.headerButton, pressed && styles.pressed, { borderColor: colors.primary }]}
+        >
+          {isRefreshing ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Feather name="refresh-cw" size={17} color={colors.primary} />
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -817,6 +873,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-5deg' }] },
   brandMarkText: { fontFamily: 'SpaceMono_700Bold', fontSize: 11, letterSpacing: -1.5 },
   brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
