@@ -261,6 +261,13 @@ function formatPublished(value: string | null): string {
   });
 }
 
+function formatLastUpdated(date: Date): string {
+  return date.toLocaleTimeString('hr-HR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function mapNewsItem(item: NewsItem, index: number): Story {
   const accents: Story['accent'][] = ['lime', 'coral', 'blue', 'amber', 'violet'];
   return {
@@ -350,9 +357,11 @@ function RefreshHourglass({ isRefreshing, color }: { isRefreshing: boolean; colo
 function Header({
   isRefreshing,
   onRefresh,
+  lastUpdated,
 }: {
   isRefreshing: boolean;
   onRefresh: () => void;
+  lastUpdated: Date;
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -375,9 +384,12 @@ function Header({
           testID="button-refresh-header"
           style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed, isRefreshing && styles.disabled]}
         >
-          <Feather name="refresh-cw" size={30} color={colors.primary} />
           <RefreshHourglass isRefreshing={isRefreshing} color={colors.hourglass} />
+          <Ionicons name="refresh-outline" size={27} color={colors.primary} />
         </Pressable>
+        <Text style={[styles.lastUpdatedText, { color: colors.mutedForeground }]}>
+          Zadnje ažurirano: {formatLastUpdated(lastUpdated)}
+        </Text>
       </View>
     </View>
   );
@@ -705,6 +717,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>(fallbackStories);
   const [activeCategory, setActiveCategory] = useState<Category>('Sve');
+  const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
   const {
     savedStories,
     isReady: savedStoriesReady,
@@ -729,6 +742,7 @@ export default function HomeScreen() {
       onSuccess: (data) => {
         setStories(data.items.map(mapNewsItem));
         setWarnings(data.warnings);
+        setLastUpdated(new Date());
       },
       onError: (error) => {
         setRefreshError(error instanceof Error ? error.message : 'Osvježavanje nije uspjelo.');
@@ -751,7 +765,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Header isRefreshing={refreshMutation.isPending} onRefresh={refresh} />
+      <Header isRefreshing={refreshMutation.isPending} onRefresh={refresh} lastUpdated={lastUpdated} />
       <FlatList
         data={listStories}
         keyExtractor={(item) => item.id}
@@ -868,12 +882,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  headerActions: { alignItems: 'flex-end', gap: 1 },
   brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-5deg' }] },
   brandMarkText: { fontFamily: 'SpaceMono_700Bold', fontSize: 11, letterSpacing: -1.5 },
   brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
   brandSubtitle: { fontFamily: 'DMSans_700Bold', fontSize: 16, lineHeight: 16, letterSpacing: -0.5 },
   refreshButton: { minWidth: 62, height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
+  lastUpdatedText: { fontFamily: 'SpaceMono_400Regular', fontSize: 7.5, lineHeight: 10 },
   content: { paddingHorizontal: 20, paddingTop: 16 },
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
   marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
