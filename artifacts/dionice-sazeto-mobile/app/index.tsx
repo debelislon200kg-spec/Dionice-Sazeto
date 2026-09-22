@@ -318,7 +318,7 @@ function PulseMark({ color, backgroundColor }: { color: string; backgroundColor:
         d="M2 18 H7 L10 18 L13 9 L17 25 L21 6 L25 18 H29"
         fill="none"
         stroke={color}
-        strokeWidth={2.2}
+        strokeWidth={1.4}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
