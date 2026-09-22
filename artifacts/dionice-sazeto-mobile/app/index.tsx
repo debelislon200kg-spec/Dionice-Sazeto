@@ -315,15 +315,15 @@ function PulseMark({ color, backgroundColor }: { color: string; backgroundColor:
     <Svg width={34} height={34} viewBox="0 0 34 34">
       <Rect x={1} y={1} width={32} height={32} rx={6} fill={backgroundColor} />
       <Path
-        d="M2 18 H7 L10 18 L13 10.8 L17 23.6 L21 8.4 L25 18 H29"
+        d="M2 18 H6 L9 10.8 L13 23.6 L17 8.4 L21 18 H25"
         fill="none"
         stroke={color}
         strokeWidth={1.4}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <Circle cx={29} cy={18} r={4.5} fill={color} opacity={0.16} />
-      <Circle cx={29} cy={18} r={2.2} fill={color} />
+      <Circle cx={25} cy={18} r={4.5} fill={color} opacity={0.16} />
+      <Circle cx={25} cy={18} r={2.2} fill={color} />
     </Svg>
   );
 }
