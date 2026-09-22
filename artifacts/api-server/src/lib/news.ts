@@ -1,4 +1,4 @@
-import { getOpenAI } from "./openai.js";
+import { batchProcess } from "@workspace/integrations-gemini-ai/batch";
 import { logger } from "./logger.js";
 import { createHash, randomUUID } from "node:crypto";
 import {
@@ -438,43 +438,64 @@ function parseAnalysisResponse(content: string): unknown[] {
   return [];
 }
 
-async function analyzeWithOpenAI(items: RawNewsItem[]): Promise<NewsItem[]> {
-  const response = await getOpenAI().chat.completions.create({
-    model: "gpt-5.6-terra",
-    max_completion_tokens: 8192,
-    messages: [
-      {
-        role: "system",
-        content:
-          "Ti si urednik financijskog portala Dionice sažeto. Obrađuješ engleske naslove vijesti za hrvatske čitatelje. Vrati isključivo JSON polje objekata, bez Markdowna. Za svaki ulaz zadrži isti id. Prevedi naslov i napiši sažetak na hrvatskom. Analiza mora biti oprezna: nikad ne obećavaj rast ili pad cijene, koristi formulacije poput mogućeg katalizatora, mogućeg pritiska ili mješovitog utjecaja. Ako ne možeš pouzdano prepoznati kompaniju ili ticker, koristi prazan naziv kompanije i null za ticker. Polje direction mora biti samo positive, negative ili mixed. confidence treba biti kratka hrvatska procjena.",
-      },
+type GeminiIntegration = typeof import("@workspace/integrations-gemini-ai");
+
+let geminiIntegrationPromise: Promise<GeminiIntegration> | null = null;
+
+function getGeminiIntegration(): Promise<GeminiIntegration> {
+  geminiIntegrationPromise ??= import("@workspace/integrations-gemini-ai");
+  return geminiIntegrationPromise;
+}
+
+const NEWS_ANALYSIS_SYSTEM_PROMPT =
+  "Ti si urednik financijskog portala Dionice sažeto. Obrađuješ engleske naslove vijesti za hrvatske čitatelje. Vrati isključivo JSON polje objekata, bez Markdowna. Za svaki ulaz zadrži isti id. Prevedi naslov i napiši sažetak na hrvatskom. Analiza mora biti oprezna: nikad ne obećavaj rast ili pad cijene, koristi formulacije poput mogućeg katalizatora, mogućeg pritiska ili mješovitog utjecaja. Ako ne možeš pouzdano prepoznati kompaniju ili ticker, koristi prazan naziv kompanije i null za ticker. Polje direction mora biti samo positive, negative ili mixed. confidence treba biti kratka hrvatska procjena.";
+
+async function analyzeWithGemini(items: RawNewsItem[]): Promise<NewsItem[]> {
+  const { ai } = await getGeminiIntegration();
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
       {
         role: "user",
-        content: JSON.stringify({
-          instruction:
-            "Za svaki članak vrati polja: id, translatedTitle, summary, company, ticker, direction, pressure, why, risks, confidence.",
-          articles: items.map((item) => ({
-            id: item.id,
-            source: item.source,
-            originalTitle: item.originalTitle,
-            description: item.description,
-          })),
-        }),
+        parts: [
+          {
+            text: JSON.stringify({
+              instruction:
+                "Za svaki članak vrati polja: id, translatedTitle, summary, company, ticker, direction, pressure, why, risks, confidence.",
+              articles: items.map((item) => ({
+                id: item.id,
+                source: item.source,
+                originalTitle: item.originalTitle,
+                description: item.description,
+              })),
+            }),
+          },
+        ],
       },
     ],
+    config: {
+      systemInstruction: NEWS_ANALYSIS_SYSTEM_PROMPT,
+      responseMimeType: "application/json",
+      maxOutputTokens: 8192,
+    },
   });
 
-  const content = response.choices[0]?.message.content ?? "";
+  const content = response.text ?? "";
   let parsed: unknown[];
   try {
     parsed = parseAnalysisResponse(content);
-  } catch {
-    parsed = [];
+  } catch (error) {
+    throw new Error(
+      `Gemini AI vratio je nevažeći JSON odgovor (${error instanceof Error ? error.message : "nepoznat format"}).`,
+    );
   }
 
   const analyses = new Map(
     parsed.filter(isAnalysis).map((analysis) => [analysis.id, analysis]),
   );
+  if (analyses.size === 0) {
+    throw new Error("Gemini AI nije vratio nijednu valjanu analizu.");
+  }
 
   return items.flatMap((item) => {
     const analysis = analyses.get(item.id);
@@ -722,7 +743,17 @@ async function processRefreshJob(job: NewsRefreshSnapshot): Promise<void> {
       async ([sourceId, batch]) => {
         const batchStartedAt = Date.now();
         try {
-          const analyzed = await analyzeWithOpenAI(batch);
+          const analyzedResults = await batchProcess(
+            [batch],
+            (sourceBatch: RawNewsItem[]) => analyzeWithGemini(sourceBatch),
+            {
+              concurrency: 1,
+              retries: 5,
+              minTimeout: 1_000,
+              maxTimeout: 15_000,
+            },
+          );
+          const analyzed = analyzedResults[0] ?? [];
           for (const item of analyzed) {
             const rawItem = batch.find((candidate) => candidate.id === item.id);
             if (rawItem) {
