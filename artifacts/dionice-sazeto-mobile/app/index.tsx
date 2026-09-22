@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Easing,
   FlatList,
@@ -369,19 +368,15 @@ function Header({
         </View>
       </View>
       <View style={styles.headerActions}>
-        <RefreshHourglass isRefreshing={isRefreshing} color={colors.hourglass} />
         <Pressable
           accessibilityLabel="Osvježi pregled"
           onPress={onRefresh}
           disabled={isRefreshing}
           testID="button-refresh-header"
-          style={({ pressed }) => [styles.headerButton, pressed && styles.pressed, { borderColor: colors.primary }]}
+          style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed, isRefreshing && styles.disabled]}
         >
-          {isRefreshing ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Feather name="refresh-cw" size={17} color={colors.primary} />
-          )}
+          <Feather name="refresh-cw" size={30} color={colors.primary} />
+          <RefreshHourglass isRefreshing={isRefreshing} color={colors.hourglass} />
         </Pressable>
       </View>
     </View>
@@ -873,12 +868,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-5deg' }] },
   brandMarkText: { fontFamily: 'SpaceMono_700Bold', fontSize: 11, letterSpacing: -1.5 },
   brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
   brandSubtitle: { fontFamily: 'DMSans_700Bold', fontSize: 16, lineHeight: 16, letterSpacing: -0.5 },
-  headerButton: { width: 38, height: 38, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  refreshButton: { minWidth: 62, height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
   content: { paddingHorizontal: 20, paddingTop: 16 },
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
   marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
