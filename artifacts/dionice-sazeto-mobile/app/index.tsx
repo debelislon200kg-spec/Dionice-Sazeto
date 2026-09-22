@@ -29,6 +29,7 @@ import { storySentimentTone } from '@/lib/storySentiment';
 
 type Direction = 'positive' | 'negative' | 'mixed';
 type Category = 'Sve' | 'Tržišta' | 'Kompanije' | 'Ekonomija' | 'Sektori';
+type SentimentFilter = 'all' | Direction;
 
 type Story = SavedStory;
 
@@ -331,6 +332,67 @@ function PulseMark({ color, backgroundColor }: { color: string; backgroundColor:
       <Circle cx={27.4} cy={18} r={4.5} fill={color} opacity={0.16} />
       <Circle cx={27.4} cy={18} r={2.2} fill={color} />
     </Svg>
+  );
+}
+
+function SentimentWave({ color }: { color: string }) {
+  return (
+    <Svg width="38" height="24" viewBox="0 0 38 24">
+      <Path
+        d="M1 13 H6 L8.5 8 L11.5 17 L15 4 L18.5 13 H22 L24.5 9 L27.5 18 L31 6 L34 13 H37"
+        fill="none"
+        stroke={color}
+        strokeWidth={1.45}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function NewsSentimentFilter({
+  activeFilter,
+  onChange,
+}: {
+  activeFilter: SentimentFilter;
+  onChange: (filter: SentimentFilter) => void;
+}) {
+  const colors = useColors();
+  const segments: Array<{ value: Direction; color: string; label: string }> = [
+    { value: 'positive', color: colors.positive, label: 'Zelene vijesti' },
+    { value: 'mixed', color: colors.mutedForeground, label: 'Sive vijesti' },
+    { value: 'negative', color: colors.destructive, label: 'Crvene vijesti' },
+  ];
+
+  return (
+    <View
+      style={[styles.sentimentFilter, { backgroundColor: colors.pulseMonitor }]}
+      accessibilityLabel="Filter raspoloženja vijesti"
+    >
+      {segments.map((segment) => {
+        const selected = activeFilter === segment.value;
+        return (
+          <Pressable
+            key={segment.value}
+            accessibilityLabel={`${segment.label}${selected ? ', odabrano' : ''}`}
+            accessibilityRole="button"
+            testID={`button-sentiment-${segment.value}`}
+            onPress={() => {
+              onChange(selected ? 'all' : segment.value);
+              Haptics.selectionAsync();
+            }}
+            style={({ pressed }) => [
+              styles.sentimentSegment,
+              pressed && styles.pressed,
+              { borderRightColor: colors.border, opacity: activeFilter === 'all' || selected ? 1 : 0.38 },
+            ]}
+          >
+            <View style={[styles.sentimentSegmentHighlight, { backgroundColor: segment.color, opacity: selected ? 0.16 : 0 }]} />
+            <SentimentWave color={segment.color} />
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -768,6 +830,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>(fallbackStories);
   const [activeCategory, setActiveCategory] = useState<Category>('Sve');
+  const [activeSentiment, setActiveSentiment] = useState<SentimentFilter>('all');
   const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
   const {
     savedStories,
@@ -847,8 +910,13 @@ export default function HomeScreen() {
   }, [activeRefreshJobId, refreshStatusQuery.error]);
 
   const visibleStories = useMemo(
-    () => stories.filter((story) => activeCategory === 'Sve' || story.category === activeCategory),
-    [activeCategory, stories],
+    () =>
+      stories.filter(
+        (story) =>
+          (activeCategory === 'Sve' || story.category === activeCategory) &&
+          (activeSentiment === 'all' || story.direction === activeSentiment),
+      ),
+    [activeCategory, activeSentiment, stories],
   );
 
   const refresh = useCallback(() => {
@@ -977,7 +1045,10 @@ export default function HomeScreen() {
             ) : null}
             <View style={styles.listHeading}>
               <Text style={[styles.listTitle, { color: colors.primary }]}>Najnovije</Text>
-              <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{visibleStories.length} priča</Text>
+              <View style={styles.listHeadingRight}>
+                <NewsSentimentFilter activeFilter={activeSentiment} onChange={setActiveSentiment} />
+                <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{visibleStories.length} priča</Text>
+              </View>
             </View>
             {visibleStories.length === 0 ? <EmptyState /> : null}
           </View>
@@ -1086,7 +1157,11 @@ const styles = StyleSheet.create({
   featuredPressureText: { fontFamily: 'DMSans_500Medium', fontSize: 11, flex: 1 },
   listHeading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
   listTitle: { fontFamily: 'DMSans_700Bold', fontSize: 19, letterSpacing: -0.4 },
+  listHeadingRight: { alignItems: 'flex-end', gap: 5 },
   listCount: { fontFamily: 'SpaceMono_400Regular', fontSize: 9 },
+  sentimentFilter: { height: 32, width: 132, flexDirection: 'row', borderRadius: 6, overflow: 'hidden' },
+  sentimentSegment: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1 },
+  sentimentSegmentHighlight: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   listItem: { paddingHorizontal: 20, marginBottom: 10 },
   storyCard: { flexDirection: 'row', borderWidth: 1, overflow: 'hidden' },
   storyAccent: { width: 5 },
