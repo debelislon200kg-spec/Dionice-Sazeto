@@ -406,7 +406,10 @@ function Header({
         <View style={styles.brandMark}>
           <PulseMark color={colors.pulseGreen} backgroundColor={colors.pulseMonitor} />
         </View>
-        <Text style={[styles.brandName, { color: colors.foreground }]}>Puls</Text>
+        <View style={styles.brandTextRow}>
+          <Text style={[styles.brandName, { color: colors.foreground }]}>Puls</Text>
+          <Text style={[styles.brandMonitor, { color: colors.pulseGreen }]}>monitor</Text>
+        </View>
       </View>
       <View style={styles.headerActions}>
         <Pressable
@@ -914,10 +917,12 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: 1,
   },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  brandTextRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   headerActions: { alignItems: 'flex-end', gap: 1 },
   brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   brandName: { fontFamily: 'DMSans_700Bold', fontSize: 20, lineHeight: 22, letterSpacing: -0.7 },
+  brandMonitor: { fontFamily: 'DMSans_500Medium', fontSize: 20, lineHeight: 22, letterSpacing: -0.7 },
   refreshButton: { minWidth: 62, height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
   lastUpdatedText: { fontFamily: 'SpaceMono_400Regular', fontSize: 11.25, lineHeight: 15 },
   lastUpdatedTime: { fontFamily: 'SpaceMono_400Regular', fontSize: 11.25, lineHeight: 15 },
