@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useRefreshNews } from '@workspace/api-client-react';
 import type { NewsItem } from '@workspace/api-client-react';
@@ -309,6 +310,23 @@ function DirectionIcon({
   return <Text style={[styles.directionDash, { color }]}>—</Text>;
 }
 
+function PulseMark({ color }: { color: string }) {
+  return (
+    <Svg width={34} height={34} viewBox="0 0 34 34">
+      <Path
+        d="M2 18 H7 L10 18 L13 9 L17 25 L21 6 L25 18 H29"
+        fill="none"
+        stroke={color}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={29} cy={18} r={4.5} fill={color} opacity={0.16} />
+      <Circle cx={29} cy={18} r={2.2} fill={color} />
+    </Svg>
+  );
+}
+
 function MarketHoursIcon({ color }: { color: string }) {
   return (
     <View style={styles.marketHoursIcon}>
@@ -384,13 +402,10 @@ function Header({
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.border }]}>
       <View style={styles.brandRow}>
-        <View style={[styles.brandMark, { backgroundColor: colors.secondary }]}>
-          <Text style={[styles.brandMarkText, { color: colors.primary }]}>DS</Text>
+        <View style={styles.brandMark}>
+          <PulseMark color={colors.secondary} />
         </View>
-        <View>
-          <Text style={[styles.brandName, { color: colors.foreground }]}>Dionice</Text>
-          <Text style={[styles.brandSubtitle, { color: colors.accent }]}>sažeto</Text>
-        </View>
+        <Text style={[styles.brandName, { color: colors.foreground }]}>Puls</Text>
       </View>
       <View style={styles.headerActions}>
         <Pressable
@@ -900,10 +915,8 @@ const styles = StyleSheet.create({
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerActions: { alignItems: 'flex-end', gap: 1 },
-  brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-5deg' }] },
-  brandMarkText: { fontFamily: 'SpaceMono_700Bold', fontSize: 11, letterSpacing: -1.5 },
-  brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
-  brandSubtitle: { fontFamily: 'DMSans_700Bold', fontSize: 16, lineHeight: 16, letterSpacing: -0.5 },
+  brandMark: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  brandName: { fontFamily: 'DMSans_700Bold', fontSize: 20, lineHeight: 22, letterSpacing: -0.7 },
   refreshButton: { minWidth: 62, height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
   lastUpdatedText: { fontFamily: 'SpaceMono_400Regular', fontSize: 11.25, lineHeight: 15 },
   lastUpdatedTime: { fontFamily: 'SpaceMono_400Regular', fontSize: 11.25, lineHeight: 15 },
