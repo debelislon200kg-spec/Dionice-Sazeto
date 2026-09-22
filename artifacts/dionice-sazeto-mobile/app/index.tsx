@@ -315,7 +315,7 @@ function PulseMark({ color, backgroundColor }: { color: string; backgroundColor:
     <Svg width={34} height={34} viewBox="0 0 34 34">
       <Rect x={1} y={1} width={32} height={32} rx={6} fill={backgroundColor} />
       <Path
-        d="M2 18 H7 L10 18 L13 9 L17 25 L21 6 L25 18 H29"
+        d="M2 18 H7 L10 18 L13 10.8 L17 23.6 L21 8.4 L25 18 H29"
         fill="none"
         stroke={color}
         strokeWidth={1.4}
