@@ -261,11 +261,17 @@ function formatPublished(value: string | null): string {
   });
 }
 
-function formatLastUpdated(date: Date): string {
-  return date.toLocaleTimeString('hr-HR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function formatLastUpdated(date: Date): { date: string; time: string } {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear().toString().slice(-2);
+  return {
+    date: `${day}.${month}.${year}`,
+    time: date.toLocaleTimeString('hr-HR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  };
 }
 
 function mapNewsItem(item: NewsItem, index: number): Story {
@@ -365,6 +371,7 @@ function Header({
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const lastUpdatedParts = formatLastUpdated(lastUpdated);
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.border }]}>
       <View style={styles.brandRow}>
@@ -388,7 +395,8 @@ function Header({
           <Ionicons name="refresh-outline" size={27} color={colors.primary} />
         </Pressable>
         <Text style={[styles.lastUpdatedText, { color: colors.mutedForeground }]}>
-          Zadnje ažurirano: {formatLastUpdated(lastUpdated)}
+          Zadnje ažurirano: {lastUpdatedParts.date}
+          <Text style={styles.lastUpdatedTime}> {lastUpdatedParts.time}</Text>
         </Text>
       </View>
     </View>
@@ -888,7 +896,8 @@ const styles = StyleSheet.create({
   brandName: { fontFamily: 'DMSans_700Bold', fontSize: 18, lineHeight: 18, letterSpacing: -0.7 },
   brandSubtitle: { fontFamily: 'DMSans_700Bold', fontSize: 16, lineHeight: 16, letterSpacing: -0.5 },
   refreshButton: { minWidth: 62, height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
-  lastUpdatedText: { fontFamily: 'SpaceMono_400Regular', fontSize: 7.5, lineHeight: 10 },
+  lastUpdatedText: { fontFamily: 'SpaceMono_400Regular', fontSize: 11.25, lineHeight: 15 },
+  lastUpdatedTime: { fontFamily: 'SpaceMono_400Regular', fontSize: 11.25, lineHeight: 15 },
   content: { paddingHorizontal: 20, paddingTop: 16 },
   marketCard: { borderWidth: 1, padding: 14, marginHorizontal: -8, marginBottom: 26 },
   marketHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 27 },
