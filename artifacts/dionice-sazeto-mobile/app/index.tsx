@@ -727,7 +727,16 @@ function StoryCard({
             <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={18} color={saved ? colors.accent : colors.mutedForeground} />
           </Pressable>
         </View>
-        <Text style={[styles.storyMeta, { color: colors.mutedForeground }]}>{story.source.toUpperCase()} · {story.published} · {story.readTime}</Text>
+        <View style={styles.storyMetaRow}>
+          <View style={[styles.storySourceBadge, { backgroundColor: colors.pulseMonitor }]}>
+            <Text style={[styles.storySourceBadgeText, { color: colors.pulseGreen }]}>
+              {story.source.toUpperCase()}
+            </Text>
+          </View>
+          <Text style={[styles.storyMeta, { color: colors.mutedForeground }]}>
+            {story.published} · {story.readTime}
+          </Text>
+        </View>
         <Text style={[styles.storyTitle, { color: colors.foreground }]}>{story.title}</Text>
         <Text numberOfLines={2} style={[styles.storySummary, { color: colors.mutedForeground }]}>{story.summary}</Text>
         <View style={styles.storyBottomline}>
@@ -1085,7 +1094,10 @@ const styles = StyleSheet.create({
   storyTopline: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   storyCompany: { fontFamily: 'DMSans_700Bold', fontSize: 12, flex: 1 },
   storyBookmark: { padding: 3 },
-  storyMeta: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, letterSpacing: 0.3, marginTop: 7 },
+  storyMetaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 7 },
+  storySourceBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3 },
+  storySourceBadgeText: { fontFamily: 'DMSans_500Medium', fontSize: 8, lineHeight: 10, letterSpacing: 0.25 },
+  storyMeta: { fontFamily: 'SpaceMono_400Regular', fontSize: 8, letterSpacing: 0.3 },
   storyTitle: { fontFamily: 'DMSans_700Bold', fontSize: 17, lineHeight: 20, letterSpacing: -0.3, marginTop: 9 },
   storySummary: { fontFamily: 'DMSans_400Regular', fontSize: 12, lineHeight: 17, marginTop: 7 },
   storyBottomline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, gap: 8 },
