@@ -1,6 +1,10 @@
 import { getOpenAI } from "./openai.js";
 import { logger } from "./logger.js";
 import { createHash, randomUUID } from "node:crypto";
+import {
+  loadPersistedNewsCache,
+  persistNewsCacheValue,
+} from "./news-cache.js";
 
 export type NewsSourceStatus = "configured" | "partial" | "unavailable";
 
@@ -529,6 +533,30 @@ let latestNews: LatestNewsSnapshot = {
   warnings: [],
 };
 
+try {
+  const persisted = await loadPersistedNewsCache();
+  for (const [sourceId, entry] of persisted.sources) {
+    sourceCache.set(sourceId, entry);
+  }
+  for (const [key, item] of persisted.analyses) {
+    analysisCache.set(key, item);
+  }
+  if (persisted.latest) {
+    latestNews = persisted.latest;
+  }
+  logger.info(
+    {
+      sourceEntries: sourceCache.size,
+      analysisEntries: analysisCache.size,
+      latestItems: latestNews.items.length,
+    },
+    "Persistent news cache loaded",
+  );
+} catch (error) {
+  logger.error({ err: error }, "Persistent news cache could not be loaded");
+  throw error;
+}
+
 function analysisKey(item: RawNewsItem): string {
   return createHash("sha256")
     .update(`${item.articleUrl}\n${item.originalTitle}\n${item.description}`)
@@ -579,11 +607,13 @@ async function fetchSourceCached(source: NewsSource): Promise<SourceResult> {
 
   try {
     const result = await fetchSource(source);
-    sourceCache.set(source.id, {
+    const entry = {
       expiresAt: Date.now() + SOURCE_CACHE_TTL_MS,
       items: result.items,
       warning: result.warning,
-    });
+    };
+    sourceCache.set(source.id, entry);
+    await persistNewsCacheValue(`source:${source.id}`, entry);
     return { source, ...result, cacheHit: false };
   } catch (error) {
     const message = error instanceof Error ? error.message : "nepoznata greška";
@@ -696,7 +726,9 @@ async function processRefreshJob(job: NewsRefreshSnapshot): Promise<void> {
           for (const item of analyzed) {
             const rawItem = batch.find((candidate) => candidate.id === item.id);
             if (rawItem) {
-              analysisCache.set(analysisKey(rawItem), item);
+              const key = analysisKey(rawItem);
+              analysisCache.set(key, item);
+              await persistNewsCacheValue(`analysis:${key}`, item);
             }
           }
           job.newItems += analyzed.length;
@@ -742,6 +774,7 @@ async function processRefreshJob(job: NewsRefreshSnapshot): Promise<void> {
       sources: job.sources.map((source) => ({ ...source })),
       warnings: [...job.warnings],
     };
+    await persistNewsCacheValue("latest", latestNews);
     logger.info(
       {
         jobId: job.jobId,
