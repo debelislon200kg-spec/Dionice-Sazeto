@@ -36,7 +36,22 @@ export const ListNewsSourcesResponse = z.array(newsSource);
 
 export const RefreshNewsResponse = z.object({
   items: z.array(newsItem),
-  refreshedAt: z.coerce.date(),
+  refreshedAt: z.string().datetime().nullable(),
   sources: z.array(newsSource),
   warnings: z.array(z.string()),
+});
+
+export const NewsRefreshJobResponse = z.object({
+  jobId: z.string(),
+  status: z.enum(["fetching", "analyzing", "completed", "failed"]),
+  items: z.array(newsItem),
+  startedAt: z.string().datetime(),
+  refreshedAt: z.string().datetime().nullable(),
+  sources: z.array(newsSource),
+  warnings: z.array(z.string()),
+  processedSources: z.number().int().nonnegative(),
+  totalSources: z.number().int().positive(),
+  cachedItems: z.number().int().nonnegative(),
+  newItems: z.number().int().nonnegative(),
+  error: z.string().nullable(),
 });

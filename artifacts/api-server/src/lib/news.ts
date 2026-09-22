@@ -1,5 +1,6 @@
 import { getOpenAI } from "./openai.js";
-import { createHash } from "node:crypto";
+import { logger } from "./logger.js";
+import { createHash, randomUUID } from "node:crypto";
 
 export type NewsSourceStatus = "configured" | "partial" | "unavailable";
 
@@ -39,6 +40,30 @@ export type NewsItem = {
   confidence: string;
   publishedAt: string | null;
   readTime: string;
+};
+
+export type NewsRefreshStatus = "fetching" | "analyzing" | "completed" | "failed";
+
+export type NewsRefreshSnapshot = {
+  jobId: string;
+  status: NewsRefreshStatus;
+  items: NewsItem[];
+  startedAt: string;
+  refreshedAt: string | null;
+  sources: NewsSource[];
+  warnings: string[];
+  processedSources: number;
+  totalSources: number;
+  cachedItems: number;
+  newItems: number;
+  error: string | null;
+};
+
+export type LatestNewsSnapshot = {
+  items: NewsItem[];
+  refreshedAt: string | null;
+  sources: NewsSource[];
+  warnings: string[];
 };
 
 export const NEWS_SOURCES: NewsSource[] = [
@@ -415,55 +440,320 @@ async function analyzeWithOpenAI(items: RawNewsItem[]): Promise<NewsItem[]> {
   });
 }
 
-export async function refreshNews(): Promise<{
-  items: NewsItem[];
-  sources: NewsSource[];
-  warnings: string[];
-}> {
-  const results = await Promise.all(
-    NEWS_SOURCES.map(async (source) => {
-      try {
-        return { source, ...(await fetchSource(source)) };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "nepoznata greška";
-        return {
-          source,
-          items: [],
-          warning: `${source.name}: dohvat nije uspio (${message}).`,
-        };
-      }
-    }),
-  );
+type SourceResult = {
+  source: NewsSource;
+  items: RawNewsItem[];
+  warning?: string;
+  cacheHit: boolean;
+};
 
-  const rawItems = results.flatMap((result) => result.items).slice(0, 24);
-  const warnings = results.flatMap((result) =>
-    result.warning ? [result.warning] : [],
-  );
+type SourceCacheEntry = {
+  expiresAt: number;
+  items: RawNewsItem[];
+  warning?: string;
+};
 
-  if (rawItems.length === 0) {
+const SOURCE_CACHE_TTL_MS = 5 * 60 * 1000;
+const JOB_RETENTION_MS = 30 * 60 * 1000;
+const AI_BATCH_CONCURRENCY = 2;
+const sourceCache = new Map<string, SourceCacheEntry>();
+const analysisCache = new Map<string, NewsItem>();
+const refreshJobs = new Map<string, NewsRefreshSnapshot>();
+let activeJobId: string | null = null;
+let latestNews: LatestNewsSnapshot = {
+  items: [],
+  refreshedAt: null,
+  sources: NEWS_SOURCES,
+  warnings: [],
+};
+
+function analysisKey(item: RawNewsItem): string {
+  return createHash("sha256")
+    .update(`${item.articleUrl}\n${item.originalTitle}\n${item.description}`)
+    .digest("hex");
+}
+
+function snapshotJob(job: NewsRefreshSnapshot): NewsRefreshSnapshot {
+  return {
+    ...job,
+    items: [...job.items],
+    sources: job.sources.map((source) => ({ ...source })),
+    warnings: [...job.warnings],
+  };
+}
+
+function mergeItems(preferred: NewsItem[], existing: NewsItem[]): NewsItem[] {
+  const merged = new Map<string, NewsItem>();
+  for (const item of [...preferred, ...existing]) {
+    if (!merged.has(item.id)) {
+      merged.set(item.id, item);
+    }
+  }
+  return Array.from(merged.values()).slice(0, 24);
+}
+
+function cleanOldJobs(now = Date.now()): void {
+  for (const [jobId, job] of refreshJobs) {
+    if (
+      job.status !== "fetching" &&
+      job.status !== "analyzing" &&
+      now - new Date(job.startedAt).getTime() > JOB_RETENTION_MS
+    ) {
+      refreshJobs.delete(jobId);
+    }
+  }
+}
+
+async function fetchSourceCached(source: NewsSource): Promise<SourceResult> {
+  const cached = sourceCache.get(source.id);
+  if (cached && cached.expiresAt > Date.now()) {
     return {
-      items: [],
-      sources: results.map(({ source, warning }) => ({
-        ...source,
-        status: warning ? "unavailable" : "configured",
-      })),
-      warnings,
+      source,
+      items: cached.items,
+      warning: cached.warning,
+      cacheHit: true,
     };
   }
 
-  const items = await analyzeWithOpenAI(rawItems);
-  if (items.length === 0) {
-    throw new Error(
-      "Vijesti su dohvaćene, ali AI obrada nije vratila valjan rezultat.",
-    );
+  try {
+    const result = await fetchSource(source);
+    sourceCache.set(source.id, {
+      expiresAt: Date.now() + SOURCE_CACHE_TTL_MS,
+      items: result.items,
+      warning: result.warning,
+    });
+    return { source, ...result, cacheHit: false };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "nepoznata greška";
+    return {
+      source,
+      items: [],
+      warning: `${source.name}: dohvat nije uspio (${message}).`,
+      cacheHit: false,
+    };
   }
+}
 
-  return {
-    items,
-    sources: results.map(({ source, warning }) => ({
+async function runWithConcurrency<T>(
+  values: T[],
+  concurrency: number,
+  worker: (value: T) => Promise<void>,
+): Promise<void> {
+  let nextIndex = 0;
+  const runners = Array.from(
+    { length: Math.min(concurrency, values.length) },
+    async () => {
+      while (nextIndex < values.length) {
+        const value = values[nextIndex];
+        nextIndex += 1;
+        if (value !== undefined) {
+          await worker(value);
+        }
+      }
+    },
+  );
+  await Promise.all(runners);
+}
+
+function publishJobItems(job: NewsRefreshSnapshot, items: NewsItem[]): void {
+  job.items = mergeItems(items, job.items);
+  latestNews = {
+    items: [...job.items],
+    refreshedAt: latestNews.refreshedAt,
+    sources: job.sources.map((source) => ({ ...source })),
+    warnings: [...job.warnings],
+  };
+}
+
+async function processRefreshJob(job: NewsRefreshSnapshot): Promise<void> {
+  const refreshStartedAt = Date.now();
+  try {
+    const results = await Promise.all(
+      NEWS_SOURCES.map(async (source) => {
+        const sourceStartedAt = Date.now();
+        const result = await fetchSourceCached(source);
+        job.processedSources += 1;
+        logger.info(
+          {
+            jobId: job.jobId,
+            source: source.id,
+            items: result.items.length,
+            cacheHit: result.cacheHit,
+            durationMs: Date.now() - sourceStartedAt,
+          },
+          "News source refresh completed",
+        );
+        return result;
+      }),
+    );
+
+    job.sources = results.map(({ source, warning }) => ({
       ...source,
       status: warning ? "partial" : "configured",
-    })),
-    warnings,
+    }));
+    job.warnings = results.flatMap((result) =>
+      result.warning ? [result.warning] : [],
+    );
+
+    const rawItems = results.flatMap((result) => result.items).slice(0, 24);
+    if (rawItems.length === 0) {
+      throw new Error("Nijedan izvor nije vratio čitljivu vijest.");
+    }
+
+    job.status = "analyzing";
+    const uncachedBatches = new Map<string, RawNewsItem[]>();
+    const cachedItems: NewsItem[] = [];
+
+    for (const rawItem of rawItems) {
+      const cached = analysisCache.get(analysisKey(rawItem));
+      if (cached) {
+        cachedItems.push({
+          ...cached,
+          publishedAt: rawItem.publishedAt ?? cached.publishedAt,
+        });
+        continue;
+      }
+
+      const batch = uncachedBatches.get(rawItem.sourceId) ?? [];
+      batch.push(rawItem);
+      uncachedBatches.set(rawItem.sourceId, batch);
+    }
+
+    job.cachedItems = cachedItems.length;
+    if (cachedItems.length > 0) {
+      publishJobItems(job, cachedItems);
+    }
+
+    await runWithConcurrency(
+      Array.from(uncachedBatches.entries()),
+      AI_BATCH_CONCURRENCY,
+      async ([sourceId, batch]) => {
+        const batchStartedAt = Date.now();
+        try {
+          const analyzed = await analyzeWithOpenAI(batch);
+          for (const item of analyzed) {
+            const rawItem = batch.find((candidate) => candidate.id === item.id);
+            if (rawItem) {
+              analysisCache.set(analysisKey(rawItem), item);
+            }
+          }
+          job.newItems += analyzed.length;
+          publishJobItems(job, analyzed);
+          logger.info(
+            {
+              jobId: job.jobId,
+              source: sourceId,
+              requestedItems: batch.length,
+              analyzedItems: analyzed.length,
+              durationMs: Date.now() - batchStartedAt,
+            },
+            "News AI batch completed",
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "nepoznata greška";
+          job.warnings.push(`${sourceId}: AI obrada nije uspjela (${message}).`);
+          logger.warn(
+            {
+              jobId: job.jobId,
+              source: sourceId,
+              durationMs: Date.now() - batchStartedAt,
+              err: error,
+            },
+            "News AI batch failed",
+          );
+        }
+      },
+    );
+
+    if (job.cachedItems + job.newItems === 0) {
+      throw new Error(
+        "Vijesti su dohvaćene, ali AI obrada nije vratila valjan rezultat.",
+      );
+    }
+
+    job.status = "completed";
+    job.refreshedAt = new Date().toISOString();
+    latestNews = {
+      items: [...job.items],
+      refreshedAt: job.refreshedAt,
+      sources: job.sources.map((source) => ({ ...source })),
+      warnings: [...job.warnings],
+    };
+    logger.info(
+      {
+        jobId: job.jobId,
+        items: job.items.length,
+        cachedItems: job.cachedItems,
+        newItems: job.newItems,
+        durationMs: Date.now() - refreshStartedAt,
+      },
+      "News refresh job completed",
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Osvježavanje vijesti nije uspjelo.";
+    job.status = "failed";
+    job.error = message;
+    job.refreshedAt = new Date().toISOString();
+    logger.error(
+      {
+        jobId: job.jobId,
+        durationMs: Date.now() - refreshStartedAt,
+        err: error,
+      },
+      "News refresh job failed",
+    );
+  } finally {
+    if (activeJobId === job.jobId) {
+      activeJobId = null;
+    }
+  }
+}
+
+export function startNewsRefresh(): NewsRefreshSnapshot {
+  cleanOldJobs();
+  if (activeJobId) {
+    const activeJob = refreshJobs.get(activeJobId);
+    if (
+      activeJob &&
+      (activeJob.status === "fetching" || activeJob.status === "analyzing")
+    ) {
+      return snapshotJob(activeJob);
+    }
+  }
+
+  const job: NewsRefreshSnapshot = {
+    jobId: randomUUID(),
+    status: "fetching",
+    items: [...latestNews.items],
+    startedAt: new Date().toISOString(),
+    refreshedAt: latestNews.refreshedAt,
+    sources: latestNews.sources.map((source) => ({ ...source })),
+    warnings: [],
+    processedSources: 0,
+    totalSources: NEWS_SOURCES.length,
+    cachedItems: 0,
+    newItems: 0,
+    error: null,
+  };
+  refreshJobs.set(job.jobId, job);
+  activeJobId = job.jobId;
+  void processRefreshJob(job);
+  return snapshotJob(job);
+}
+
+export function getNewsRefreshJob(jobId: string): NewsRefreshSnapshot | null {
+  cleanOldJobs();
+  const job = refreshJobs.get(jobId);
+  return job ? snapshotJob(job) : null;
+}
+
+export function getLatestNews(): LatestNewsSnapshot {
+  return {
+    items: [...latestNews.items],
+    refreshedAt: latestNews.refreshedAt,
+    sources: latestNews.sources.map((source) => ({ ...source })),
+    warnings: [...latestNews.warnings],
   };
 }

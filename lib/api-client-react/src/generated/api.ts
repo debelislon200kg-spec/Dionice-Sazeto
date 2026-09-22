@@ -22,6 +22,7 @@ import type {
 import type {
   HealthStatus,
   NewsRefreshError,
+  NewsRefreshJob,
   NewsRefreshResponse,
   NewsSource
 } from './api.schemas';
@@ -208,6 +209,83 @@ export function useListNewsSources<TData = Awaited<ReturnType<typeof listNewsSou
 
 
 
+export const getGetLatestNewsUrl = () => {
+
+
+
+
+  return `/api/news/latest`
+}
+
+/**
+ * @summary Return the latest cached news briefing
+ */
+export const getLatestNews = async ( options?: Parameters<typeof customFetch>[1]): Promise<NewsRefreshResponse> => {
+
+  return customFetch<NewsRefreshResponse>(getGetLatestNewsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLatestNewsQueryKey = () => {
+    return [
+    `/api/news/latest`
+    ] as const;
+    }
+
+
+export const getGetLatestNewsQueryOptions = <TData = Awaited<ReturnType<typeof getLatestNews>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestNews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLatestNewsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLatestNews>>> = ({ signal }) => getLatestNews({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLatestNews>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLatestNewsQueryResult = NonNullable<Awaited<ReturnType<typeof getLatestNews>>>
+export type GetLatestNewsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Return the latest cached news briefing
+ */
+
+export function useGetLatestNews<TData = Awaited<ReturnType<typeof getLatestNews>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestNews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLatestNewsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getRefreshNewsUrl = () => {
 
 
@@ -217,11 +295,11 @@ export const getRefreshNewsUrl = () => {
 }
 
 /**
- * @summary Fetch and analyze the latest news from configured sources
+ * @summary Start a background refresh or return the currently active refresh
  */
-export const refreshNews = async ( options?: Parameters<typeof customFetch>[1]): Promise<NewsRefreshResponse> => {
+export const refreshNews = async ( options?: Parameters<typeof customFetch>[1]): Promise<NewsRefreshJob> => {
 
-  return customFetch<NewsRefreshResponse>(getRefreshNewsUrl(),
+  return customFetch<NewsRefreshJob>(getRefreshNewsUrl(),
   {
     ...options,
     method: 'POST'
@@ -269,7 +347,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
     /**
- * @summary Fetch and analyze the latest news from configured sources
+ * @summary Start a background refresh or return the currently active refresh
  */
 export const useRefreshNews = <TError = ErrorType<NewsRefreshError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshNews>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -281,4 +359,81 @@ export const useRefreshNews = <TError = ErrorType<NewsRefreshError>,
       > => {
       return useMutation(getRefreshNewsMutationOptions(options));
     }
+
+export const getGetNewsRefreshStatusUrl = (jobId: string,) => {
+
+
+
+
+  return `/api/news/refresh/${jobId}`
+}
+
+/**
+ * @summary Return current progress and available results for a background refresh
+ */
+export const getNewsRefreshStatus = async (jobId: string, options?: Parameters<typeof customFetch>[1]): Promise<NewsRefreshJob> => {
+
+  return customFetch<NewsRefreshJob>(getGetNewsRefreshStatusUrl(jobId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetNewsRefreshStatusQueryKey = (jobId: string,) => {
+    return [
+    `/api/news/refresh/${jobId}`
+    ] as const;
+    }
+
+
+export const getGetNewsRefreshStatusQueryOptions = <TData = Awaited<ReturnType<typeof getNewsRefreshStatus>>, TError = ErrorType<NewsRefreshError>>(jobId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNewsRefreshStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNewsRefreshStatusQueryKey(jobId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNewsRefreshStatus>>> = ({ signal }) => getNewsRefreshStatus(jobId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: jobId !== null && jobId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNewsRefreshStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetNewsRefreshStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getNewsRefreshStatus>>>
+export type GetNewsRefreshStatusQueryError = ErrorType<NewsRefreshError>
+
+
+/**
+ * @summary Return current progress and available results for a background refresh
+ */
+
+export function useGetNewsRefreshStatus<TData = Awaited<ReturnType<typeof getNewsRefreshStatus>>, TError = ErrorType<NewsRefreshError>>(
+ jobId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNewsRefreshStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetNewsRefreshStatusQueryOptions(jobId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

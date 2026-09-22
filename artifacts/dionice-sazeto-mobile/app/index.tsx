@@ -15,7 +15,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { useRefreshNews } from '@workspace/api-client-react';
+import {
+  getGetLatestNewsQueryKey,
+  getGetNewsRefreshStatusQueryKey,
+  useGetLatestNews,
+  useGetNewsRefreshStatus,
+  useRefreshNews,
+} from '@workspace/api-client-react';
 import type { NewsItem } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useSavedStories, type SavedStory } from '@/contexts/SavedStoriesContext';
@@ -763,7 +769,73 @@ export default function HomeScreen() {
   } = useSavedStories();
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [activeRefreshJobId, setActiveRefreshJobId] = useState<string | null>(null);
+  const latestNewsQuery = useGetLatestNews({
+    query: {
+      queryKey: getGetLatestNewsQueryKey(),
+      retry: 1,
+      staleTime: 30_000,
+    },
+  });
   const refreshMutation = useRefreshNews();
+  const refreshStatusQuery = useGetNewsRefreshStatus(activeRefreshJobId ?? '', {
+    query: {
+      queryKey: getGetNewsRefreshStatusQueryKey(activeRefreshJobId ?? ''),
+      enabled: activeRefreshJobId !== null,
+      refetchInterval: activeRefreshJobId ? 1_200 : false,
+      retry: 1,
+    },
+  });
+  const isRefreshing = refreshMutation.isPending || activeRefreshJobId !== null;
+  const refreshStatus = refreshStatusQuery.data;
+
+  useEffect(() => {
+    const latest = latestNewsQuery.data;
+    if (!latest || latest.items.length === 0) return;
+    setStories(latest.items.map(mapNewsItem));
+    setWarnings(latest.warnings);
+    if (latest.refreshedAt) {
+      setLastUpdated(new Date(latest.refreshedAt));
+    }
+  }, [latestNewsQuery.data]);
+
+  useEffect(() => {
+    if (
+      !activeRefreshJobId ||
+      !refreshStatus ||
+      refreshStatus.jobId !== activeRefreshJobId
+    ) {
+      return;
+    }
+
+    if (refreshStatus.items.length > 0) {
+      setStories(refreshStatus.items.map(mapNewsItem));
+    }
+    setWarnings(refreshStatus.warnings);
+
+    if (refreshStatus.status === 'completed') {
+      if (refreshStatus.refreshedAt) {
+        setLastUpdated(new Date(refreshStatus.refreshedAt));
+      }
+      setActiveRefreshJobId(null);
+      return;
+    }
+
+    if (refreshStatus.status === 'failed') {
+      setRefreshError(refreshStatus.error ?? 'Osvježavanje nije uspjelo.');
+      setActiveRefreshJobId(null);
+    }
+  }, [activeRefreshJobId, refreshStatus]);
+
+  useEffect(() => {
+    if (!activeRefreshJobId || !refreshStatusQuery.error) return;
+    setRefreshError(
+      refreshStatusQuery.error instanceof Error
+        ? refreshStatusQuery.error.message
+        : 'Status osvježavanja nije dostupan.',
+    );
+    setActiveRefreshJobId(null);
+  }, [activeRefreshJobId, refreshStatusQuery.error]);
 
   const visibleStories = useMemo(
     () => stories.filter((story) => activeCategory === 'Sve' || story.category === activeCategory),
@@ -771,20 +843,22 @@ export default function HomeScreen() {
   );
 
   const refresh = useCallback(() => {
-    if (refreshMutation.isPending) return;
+    if (isRefreshing) return;
     setRefreshError(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     refreshMutation.mutate(undefined, {
       onSuccess: (data) => {
-        setStories(data.items.map(mapNewsItem));
+        if (data.items.length > 0) {
+          setStories(data.items.map(mapNewsItem));
+        }
         setWarnings(data.warnings);
-        setLastUpdated(new Date());
+        setActiveRefreshJobId(data.jobId);
       },
       onError: (error) => {
         setRefreshError(error instanceof Error ? error.message : 'Osvježavanje nije uspjelo.');
       },
     });
-  }, [refreshMutation]);
+  }, [isRefreshing, refreshMutation]);
 
   const openArticle = useCallback((url: string) => {
     void Linking.openURL(url);
@@ -801,7 +875,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Header isRefreshing={refreshMutation.isPending} onRefresh={refresh} lastUpdated={lastUpdated} />
+      <Header isRefreshing={isRefreshing} onRefresh={refresh} lastUpdated={lastUpdated} />
       <FlatList
         data={listStories}
         keyExtractor={(item) => item.id}
@@ -831,6 +905,16 @@ export default function HomeScreen() {
                 <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
               </Pressable>
             </View>
+            {isRefreshing ? (
+              <View style={[styles.refreshProgress, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                <RefreshHourglass isRefreshing color={colors.hourglass} />
+                <Text style={[styles.refreshProgressText, { color: colors.foreground }]}>
+                  {refreshStatus?.status === 'analyzing'
+                    ? `Obrađujem članke · ${refreshStatus.cachedItems + refreshStatus.newItems} spremno`
+                    : `Provjeravam izvore · ${refreshStatus?.processedSources ?? 0}/${refreshStatus?.totalSources ?? 6}`}
+                </Text>
+              </View>
+            ) : null}
             {refreshError ? (
               <View style={[styles.feedback, { backgroundColor: colors.errorSurface, borderColor: colors.accent }]}>
                 <Feather name="alert-circle" size={16} color={colors.destructive} />
@@ -972,6 +1056,8 @@ const styles = StyleSheet.create({
   feedback: { borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, marginBottom: 10 },
   feedbackText: { flex: 1, fontFamily: 'DMSans_500Medium', fontSize: 12, lineHeight: 17 },
   feedbackRetry: { padding: 4 },
+  refreshProgress: { borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, marginBottom: 10 },
+  refreshProgressText: { flex: 1, fontFamily: 'DMSans_500Medium', fontSize: 12, lineHeight: 17 },
   warning: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, marginBottom: 10 },
   warningText: { flex: 1, fontFamily: 'DMSans_400Regular', fontSize: 11, lineHeight: 15 },
   categoryRow: { gap: 8, paddingBottom: 17 },

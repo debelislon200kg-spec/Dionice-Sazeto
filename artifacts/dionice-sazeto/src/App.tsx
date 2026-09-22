@@ -439,9 +439,15 @@ function NewsHome() {
     setRefreshLabel('Provjeravam izvore…');
     refreshMutation.mutate(undefined, {
       onSuccess: (data) => {
-        setCurrentStories(data.items.map(mapNewsItem));
+        if (data.items.length > 0) {
+          setCurrentStories(data.items.map(mapNewsItem));
+        }
         setSourceWarnings(data.warnings);
-        setRefreshLabel(`Osvježeno u ${new Date(data.refreshedAt).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`);
+        setRefreshLabel(
+          data.refreshedAt
+            ? `Osvježeno u ${new Date(data.refreshedAt).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`
+            : 'Osvježavanje pokrenuto',
+        );
         window.setTimeout(() => setRefreshLabel('Osvježi pregled'), 2600);
       },
       onError: (error) => {

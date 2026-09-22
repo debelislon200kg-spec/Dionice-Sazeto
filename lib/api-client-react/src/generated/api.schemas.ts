@@ -57,9 +57,41 @@ export interface NewsItem {
 
 export interface NewsRefreshResponse {
   items: NewsItem[];
-  refreshedAt: string;
+  /** @nullable */
+  refreshedAt: string | null;
   sources: NewsSource[];
   warnings: string[];
+}
+
+export type NewsRefreshJobStatus = typeof NewsRefreshJobStatus[keyof typeof NewsRefreshJobStatus];
+
+
+export const NewsRefreshJobStatus = {
+  fetching: 'fetching',
+  analyzing: 'analyzing',
+  completed: 'completed',
+  failed: 'failed',
+} as const;
+
+export interface NewsRefreshJob {
+  jobId: string;
+  status: NewsRefreshJobStatus;
+  items: NewsItem[];
+  startedAt: string;
+  /** @nullable */
+  refreshedAt: string | null;
+  sources: NewsSource[];
+  warnings: string[];
+  /** @minimum 0 */
+  processedSources: number;
+  /** @minimum 1 */
+  totalSources: number;
+  /** @minimum 0 */
+  cachedItems: number;
+  /** @minimum 0 */
+  newItems: number;
+  /** @nullable */
+  error: string | null;
 }
 
 export interface NewsRefreshError {

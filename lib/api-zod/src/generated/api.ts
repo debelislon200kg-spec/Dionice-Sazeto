@@ -30,9 +30,9 @@ export const ListNewsSourcesResponse = zod.array(ListNewsSourcesResponseItem)
 
 
 /**
- * @summary Fetch and analyze the latest news from configured sources
+ * @summary Return the latest cached news briefing
  */
-export const RefreshNewsResponse = zod.object({
+export const GetLatestNewsResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.string(),
   "source": zod.string(),
@@ -51,7 +51,7 @@ export const RefreshNewsResponse = zod.object({
   "publishedAt": zod.string().nullable(),
   "readTime": zod.string()
 })),
-  "refreshedAt": zod.coerce.date(),
+  "refreshedAt": zod.coerce.date().nullable(),
   "sources": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -59,6 +59,110 @@ export const RefreshNewsResponse = zod.object({
   "status": zod.enum(['configured', 'partial', 'unavailable'])
 })),
   "warnings": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Start a background refresh or return the currently active refresh
+ */
+export const refreshNewsResponseProcessedSourcesMin = 0;
+
+
+export const refreshNewsResponseCachedItemsMin = 0;
+
+export const refreshNewsResponseNewItemsMin = 0;
+
+
+
+export const RefreshNewsResponse = zod.object({
+  "jobId": zod.string(),
+  "status": zod.enum(['fetching', 'analyzing', 'completed', 'failed']),
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "source": zod.string(),
+  "sourceUrl": zod.string().url(),
+  "articleUrl": zod.string().url(),
+  "originalTitle": zod.string(),
+  "translatedTitle": zod.string(),
+  "summary": zod.string(),
+  "company": zod.string(),
+  "ticker": zod.string().nullable(),
+  "direction": zod.enum(['positive', 'negative', 'mixed']),
+  "pressure": zod.string(),
+  "why": zod.string(),
+  "risks": zod.string(),
+  "confidence": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "readTime": zod.string()
+})),
+  "startedAt": zod.coerce.date(),
+  "refreshedAt": zod.coerce.date().nullable(),
+  "sources": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "url": zod.string().url(),
+  "status": zod.enum(['configured', 'partial', 'unavailable'])
+})),
+  "warnings": zod.array(zod.string()),
+  "processedSources": zod.number().int().min(refreshNewsResponseProcessedSourcesMin),
+  "totalSources": zod.number().int().min(1),
+  "cachedItems": zod.number().int().min(refreshNewsResponseCachedItemsMin),
+  "newItems": zod.number().int().min(refreshNewsResponseNewItemsMin),
+  "error": zod.string().nullable()
+})
+
+
+/**
+ * @summary Return current progress and available results for a background refresh
+ */
+export const GetNewsRefreshStatusParams = zod.object({
+  "jobId": zod.coerce.string()
+})
+
+export const getNewsRefreshStatusResponseProcessedSourcesMin = 0;
+
+
+export const getNewsRefreshStatusResponseCachedItemsMin = 0;
+
+export const getNewsRefreshStatusResponseNewItemsMin = 0;
+
+
+
+export const GetNewsRefreshStatusResponse = zod.object({
+  "jobId": zod.string(),
+  "status": zod.enum(['fetching', 'analyzing', 'completed', 'failed']),
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "source": zod.string(),
+  "sourceUrl": zod.string().url(),
+  "articleUrl": zod.string().url(),
+  "originalTitle": zod.string(),
+  "translatedTitle": zod.string(),
+  "summary": zod.string(),
+  "company": zod.string(),
+  "ticker": zod.string().nullable(),
+  "direction": zod.enum(['positive', 'negative', 'mixed']),
+  "pressure": zod.string(),
+  "why": zod.string(),
+  "risks": zod.string(),
+  "confidence": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "readTime": zod.string()
+})),
+  "startedAt": zod.coerce.date(),
+  "refreshedAt": zod.coerce.date().nullable(),
+  "sources": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "url": zod.string().url(),
+  "status": zod.enum(['configured', 'partial', 'unavailable'])
+})),
+  "warnings": zod.array(zod.string()),
+  "processedSources": zod.number().int().min(getNewsRefreshStatusResponseProcessedSourcesMin),
+  "totalSources": zod.number().int().min(1),
+  "cachedItems": zod.number().int().min(getNewsRefreshStatusResponseCachedItemsMin),
+  "newItems": zod.number().int().min(getNewsRefreshStatusResponseNewItemsMin),
+  "error": zod.string().nullable()
 })
 
 

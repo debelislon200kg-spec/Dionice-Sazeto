@@ -5,7 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { NewsItemDirection } from './newsItemDirection.js';
+import type { NewsItemDirection } from './newsItemDirection';
 
 export interface NewsItem {
   id: string;
