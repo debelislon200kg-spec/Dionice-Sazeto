@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useRefreshNews } from '@workspace/api-client-react';
 import type { NewsItem } from '@workspace/api-client-react';
@@ -310,9 +310,10 @@ function DirectionIcon({
   return <Text style={[styles.directionDash, { color }]}>—</Text>;
 }
 
-function PulseMark({ color }: { color: string }) {
+function PulseMark({ color, backgroundColor }: { color: string; backgroundColor: string }) {
   return (
     <Svg width={34} height={34} viewBox="0 0 34 34">
+      <Rect x={1} y={1} width={32} height={32} rx={6} fill={backgroundColor} />
       <Path
         d="M2 18 H7 L10 18 L13 9 L17 25 L21 6 L25 18 H29"
         fill="none"
@@ -403,7 +404,7 @@ function Header({
     <View style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.border }]}>
       <View style={styles.brandRow}>
         <View style={styles.brandMark}>
-          <PulseMark color={colors.secondary} />
+          <PulseMark color={colors.pulseGreen} backgroundColor={colors.pulseMonitor} />
         </View>
         <Text style={[styles.brandName, { color: colors.foreground }]}>Puls</Text>
       </View>
